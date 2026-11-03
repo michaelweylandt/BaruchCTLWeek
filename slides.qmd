@@ -1,5 +1,5 @@
 ---
-title: "[</br></br></br></br></br>Baruch Teaching Excellence Week 2026 </br> Modeling Data Analysis in a Graduate Programming Course </br>Last Updated: 2026-11-02]{.r-fit-text}"
+title: "[</br></br></br></br></br>Baruch Teaching Excellence Week 2026 </br> Modeling Data Analysis in a Graduate Programming Course </br>Last Updated: 2026-11-02]</br> <https://bit.ly/3Wqe23R>{.r-fit-text}"
 last_updated: "`r last_updated <- Sys.Date(); 
                   last_updated |> format('%Y-%m-%d')`"
 format:
@@ -15,7 +15,17 @@ format:
     height: 720
     center: false
 
+filters:
+  - highlight-text
 ---
+
+# 
+
+![](./bitly.png){width="40%" fig-align="center"}
+
+<https://bit.ly/3Wqe23R>
+
+<https://michael-weylandt.com/BaruchCTLWeek>
 
 
 # Review 
@@ -182,7 +192,7 @@ inner_join(cunys, routes, join_by(campus_borough == borough_name))
 
 . . . 
 
-[MEC vanished!]{color="red"}
+[**MEC vanished!**]{color="red"}
 
 ## Inner and Outer Joins
 
@@ -1081,7 +1091,7 @@ TITLE_BASICS |>
 
 2004: **Eternal Sunshine**
 
-![](https://upload.wikimedia.org/wikipedia/en/a/a4/Eternal_Sunshine_of_the_Spotless_Mind.png){fig-align="center" width="100%"}
+![](https://upload.wikimedia.org/wikipedia/en/a/a4/Eternal_Sunshine_of_the_Spotless_Mind.png){fig-align="center" width="80%"}
 
 :::
 
@@ -1089,7 +1099,7 @@ TITLE_BASICS |>
 
 2011 **Green Hornet**
 
-![](https://upload.wikimedia.org/wikipedia/en/f/fa/The_Green_Hornet_Poster.jpg){fig-align="center" width="100%"}
+![](https://upload.wikimedia.org/wikipedia/en/f/fa/The_Green_Hornet_Poster.jpg){fig-align="center" width="80%"}
 
 :::
 
