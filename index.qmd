@@ -14,10 +14,6 @@ resources:
 
 {{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
 
-```{webr}
-1 + 2 + 3
-```
-
 
 ```{r}
 #| include: false
@@ -31,7 +27,7 @@ library(httr2)
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: true
+#| echo: false
 suppressPackageStartupMessages({
   suppressMessages({
     library(tidyverse)
@@ -47,6 +43,7 @@ BASE_PATH <- fs::dir_ls(glob="*csv.gz", recurse=TRUE) |>
 ```{webr}
 #| autorun: true
 #| message: false
+#| echo: false
 NAME_BASICS <- read_csv(fs::path(BASE_PATH, "name_basics.csv.gz"), 
                         show_col_types=FALSE)
 ```
@@ -54,6 +51,7 @@ NAME_BASICS <- read_csv(fs::path(BASE_PATH, "name_basics.csv.gz"),
 ```{webr}
 #| autorun: true
 #| message: false
+#| echo: false
 NAME_BASICS_LONGER <- read_csv(fs::path(BASE_PATH, "name_basics_longer.csv.gz"),
                         show_col_types=FALSE)
 ```
@@ -61,6 +59,7 @@ NAME_BASICS_LONGER <- read_csv(fs::path(BASE_PATH, "name_basics_longer.csv.gz"),
 ```{webr}
 #| autorun: true
 #| message: false
+#| echo: false
 TITLE_BASICS <- read_csv(fs::path(BASE_PATH, "title_basics.csv.gz"), 
                         show_col_types=FALSE)
 ```
@@ -68,6 +67,7 @@ TITLE_BASICS <- read_csv(fs::path(BASE_PATH, "title_basics.csv.gz"),
 ```{webr}
 #| autorun: true
 #| message: false
+#| echo: false
 TITLE_BASICS_LONGER <- read_csv(fs::path(BASE_PATH, "title_basics_longer.csv.gz"),
                         show_col_types=FALSE)
 ```
@@ -75,6 +75,7 @@ TITLE_BASICS_LONGER <- read_csv(fs::path(BASE_PATH, "title_basics_longer.csv.gz"
 ```{webr}
 #| autorun: true
 #| message: false
+#| echo: false
 TITLE_RATINGS <- read_csv(fs::path(BASE_PATH, "title_ratings.csv.gz"),
                           show_col_types=FALSE)
 TITLE_CREW <- read_csv(fs::path(BASE_PATH, "title_crew.csv.gz"),
@@ -84,6 +85,7 @@ TITLE_CREW <- read_csv(fs::path(BASE_PATH, "title_crew.csv.gz"),
 ```{webr}
 #| autorun: true
 #| message: false
+#| echo: false
 TITLE_PRINCIPALS <- read_csv(fs::path(BASE_PATH, "title_principals.csv.gz"),
                              show_col_types=FALSE)
 ```
