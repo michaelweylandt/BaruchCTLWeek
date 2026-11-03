@@ -1,5 +1,5 @@
 ---
-title: "[</br></br></br></br></br>Baruch Teaching Excellence Week 2026 </br> Modeling Data Analysis in a Graduate Programming Course </br>Last Updated: 2026-11-02]</br> <https://bit.ly/3Wqe23R>{.r-fit-text}"
+title: "[</br></br></br></br></br>Baruch Teaching Excellence Week 2026 </br> Modeling Data Analysis in a Graduate Programming Course]{.r-fit-text}"
 last_updated: "`r last_updated <- Sys.Date(); 
                   last_updated |> format('%Y-%m-%d')`"
 format:
