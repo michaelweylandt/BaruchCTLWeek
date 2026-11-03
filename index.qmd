@@ -33,7 +33,7 @@ suppressPackageStartupMessages({
 #| autorun: true
 #| message: false
 #| echo: false
-NAME_BASICS <- read_csv("docs/data/processed/name_basics.csv.gz", 
+NAME_BASICS <- read_csv("data/processed/name_basics.csv.gz", 
                         show_col_types=FALSE)
 ```
 
@@ -41,7 +41,7 @@ NAME_BASICS <- read_csv("docs/data/processed/name_basics.csv.gz",
 #| autorun: true
 #| message: false
 #| echo: false
-NAME_BASICS_LONGER <- read_csv("docs/data/processed/name_basics_longer.csv.gz", 
+NAME_BASICS_LONGER <- read_csv("data/processed/name_basics_longer.csv.gz", 
                         show_col_types=FALSE)
 ```
 
@@ -49,9 +49,7 @@ NAME_BASICS_LONGER <- read_csv("docs/data/processed/name_basics_longer.csv.gz",
 #| autorun: true
 #| message: false
 #| echo: false
-TITLE_BASICS <- read_csv("docs/data/processed/title_basics.csv.gz", 
-                        show_col_types=FALSE)
-TITLE_BASICS_LONGER <- read_csv("docs/data/processed/title_basics_longer.csv.gz", 
+TITLE_BASICS <- read_csv("data/processed/title_basics.csv.gz", 
                         show_col_types=FALSE)
 ```
 
@@ -59,11 +57,25 @@ TITLE_BASICS_LONGER <- read_csv("docs/data/processed/title_basics_longer.csv.gz"
 #| autorun: true
 #| message: false
 #| echo: false
-TITLE_RATINGS <- read_csv("docs/data/processed/title_ratings.csv.gz",
+TITLE_BASICS_LONGER <- read_csv("data/processed/title_basics_longer.csv.gz", 
+                        show_col_types=FALSE)
+```
+
+```{webr}
+#| autorun: true
+#| message: false
+#| echo: false
+TITLE_RATINGS <- read_csv("data/processed/title_ratings.csv.gz",
                           show_col_types=FALSE)
-TITLE_CREW <- read_csv("docs/data/processed/title_crew.csv.gz", 
+TITLE_CREW <- read_csv("data/processed/title_crew.csv.gz", 
                        show_col_types=FALSE)
-TITLE_PRINCIPALS <- read_csv("docs/data/processed/title_principals.csv.gz",
+```
+
+```{webr}
+#| autorun: true
+#| message: false
+#| echo: false
+TITLE_PRINCIPALS <- read_csv("data/processed/title_principals.csv.gz",
                              show_col_types=FALSE)
 ```
 
@@ -107,13 +119,10 @@ more detail.
 
 Participants will be able to take part in this lesson in two ways: 
 
-1.  Paper printouts of the key analytical steps will be provided by CTL staff. 
-    These necessarily loose some of the 'open-endedness' of the original 
-    project, but participants will still be able to make some choices in a 
-    'choose-your-own adventure' format. 
-
-    A PDF containing these printouts can be found [here](./pdf_steps.pdf)
-   
+1.  Slides walking through the lesson will be available [here](./slides.qmd). 
+    These necessarily loose some of the 'open-endedness' of the original project,
+    but will keep us moving forward. 
+    
 2.  Participants who have their laptops handy will be able to follow along with
     the assignment on this page, using interactive code blocks like this: 
    
@@ -720,6 +729,7 @@ some basic sketches on a scratch piece of paper are often quite clarifying.
     names, so we are fine dropping unmatched values.
     
     ```{webr}
+    #| autorun: true
     NAME_BASICS_LONGER |> 
         filter(primaryName == "Harrison Ford", 
                birthYear == 1942 # Make sure to ignore the silent-film era Ford
@@ -738,6 +748,7 @@ some basic sketches on a scratch piece of paper are often quite clarifying.
     so an `inner_join()` will suffice. 
 
     ```{webr}
+    #| autorun: true
     TITLE_CREW |> 
         count(directors) |> 
         slice_max(n) |> 
@@ -876,6 +887,7 @@ TITLE_SUCCESS |>
 Absolute hits all. And on the other end of the spectrum: 
 
 ```{webr}
+#| autorun: true
 TITLE_SUCCESS |> 
   inner_join(TITLE_PRINCIPALS, join_by(tconst==tconst)) |> 
   inner_join(NAME_BASICS, join_by(nconst==nconst)) |> 

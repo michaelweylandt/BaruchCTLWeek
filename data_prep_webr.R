@@ -15,7 +15,7 @@ get_imdb_file <- function(fname){
     readr::read_tsv(fname,
                     lazy=FALSE,
                     show_col_types=FALSE,
-                    n_max=5000000,
+                    n_max=10000000,
                     na="\\N") |>
         mutate(across(ends_with("year"), as.numeric))
 }
@@ -72,3 +72,5 @@ write_csv(TITLE_BASICS_LONGER, "docs/data/processed/title_basics_longer.csv.gz")
 write_csv(TITLE_CREW, "docs/data/processed/title_crew.csv.gz")
 write_csv(TITLE_PRINCIPALS, "docs/data/processed/title_principals.csv.gz")
 write_csv(TITLE_RATINGS, "docs/data/processed/title_ratings.csv.gz")
+
+fs::dir_copy("docs/data/processed", "data/processed")

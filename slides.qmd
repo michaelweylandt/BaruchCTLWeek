@@ -1,5 +1,5 @@
 ---
-title: "[</br></br></br></br></br>Baruch Teaching Excellence Week 2026 -- Modeling Data Analysis </br>Last Updated: 2026-11-02]{.r-fit-text}"
+title: "[</br></br></br></br></br>Baruch Teaching Excellence Week 2026 </br> Modeling Data Analysis in a Graduate Programming Course </br>Last Updated: 2026-11-02]{.r-fit-text}"
 last_updated: "`r last_updated <- Sys.Date(); 
                   last_updated |> format('%Y-%m-%d')`"
 format:
@@ -402,25 +402,6 @@ From IMDB, 5 Tables:
 #| message: false
 library(tidyverse)
 library(gt)
-get_imdb_file <- function(fname){
-    BASE_URL <- "https://datasets.imdbws.com/"
-    fname_ext <- paste0(fname, ".tsv.gz")
-    fs::dir_create("data")
-    fname <- fs::path("data", fname_ext)
-    if(!fs::file_exists(fname)){
-        FILE_URL <- paste0(BASE_URL, fname_ext)
-        download.file(FILE_URL, 
-                      destfile = fname)
-    }
-    readr::read_tsv(fname, 
-                    lazy=FALSE, 
-                    show_col_types=FALSE, 
-                    n_max=1000000, # Increase for more accurate results
-                                   # We're currently using a subset for speed
-                    na="\\N") |>
-        mutate(across(ends_with("year"), as.numeric))
-}
-
 tiny_table <- function(x){
     xx <- as_label(enquo(x))
     x |> slice_sample(n=10) |> gt(id=paste0("tbl_", tolower(xx))) |> tab_header(xx)
@@ -430,7 +411,7 @@ tiny_table <- function(x){
 ```{r}
 #| echo: false
 #| cache: true
-NAME_BASICS      <- get_imdb_file("name.basics")
+NAME_BASICS <- read_csv("docs/data/processed/name_basics.csv.gz")
 tiny_table(NAME_BASICS)
 ```
 
@@ -439,7 +420,7 @@ tiny_table(NAME_BASICS)
 ```{r}
 #| echo: false
 #| cache: true
-TITLE_BASICS      <- get_imdb_file("title.basics")
+TITLE_BASICS <- read_csv("docs/data/processed/title_basics.csv.gz")
 tiny_table(TITLE_BASICS)
 ```
 
@@ -449,7 +430,7 @@ tiny_table(TITLE_BASICS)
 ```{r}
 #| echo: false
 #| cache: true
-TITLE_RATINGS      <- get_imdb_file("title.ratings")
+TITLE_RATINGS <- read_csv("docs/data/processed/title_ratings.csv.gz")
 tiny_table(TITLE_RATINGS)
 ```
 
@@ -458,7 +439,7 @@ tiny_table(TITLE_RATINGS)
 ```{r}
 #| echo: false
 #| cache: true
-TITLE_CREW      <- get_imdb_file("title.crew")
+TITLE_CREW <- read_csv("docs/data/processed/title_crew.csv.gz")
 tiny_table(TITLE_CREW)
 ```
 
@@ -467,7 +448,7 @@ tiny_table(TITLE_CREW)
 ```{r}
 #| echo: false
 #| cache: true
-TITLE_PRINCIPALS    <- get_imdb_file("title.principals")
+TITLE_PRINCIPALS <- read_csv("docs/data/processed/title_principals.csv.gz")
 tiny_table(TITLE_PRINCIPALS)
 ```
 
@@ -545,7 +526,44 @@ NAME_BASICS  |>
 
 ## Warm-Up
 
-`inner_join` to find matching rows: 
+:::: {.columns}
+
+::: {.column width="40%"}
+
+```{r}
+#| echo: false
+NAME_BASICS |> 
+    select(nconst, primaryName, knownForTitles) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("NAME_BASICS")
+```
+
+:::
+
+
+::: {.column width="40%"}
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    select(tconst, primaryTitle) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_BASICS")
+```
+
+:::
+
+::::
+
+. . . 
+
+What _type_ of join? What _column(s)_ to join?
+
+## Warm-Up
+
+`inner_join` on `knownForTitles`/`tconst` to find matching rows: 
 
 ```{r}
 #| echo: true
@@ -590,4 +608,644 @@ Analytic Pipeline:
 4) What directors are successful in that genre?
 5) What actors have never worked in that genre?
 6) Pitch Time!
+
+# Defining Success
+
+Design a 'success' measure for IMDb entries, reflecting both quality and
+broad popular awareness. 
+
+
+## 1. Defining Success
+
+How can we quantify _success_ (without box office)?
+
+. . . 
+
+- _Lots_ of votes (quantity)
+- _High_ ratings (quality)
+
+## 1. Defining Success
+
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+Ratings Table:
+
+```{r}
+#| echo: false
+TITLE_RATINGS |> 
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_RATINGS")
+```
+
+:::
+
+::: {.column width="40%"}
+
+Movies Table:
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    select(tconst, primaryTitle) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_BASICS")
+```
+
+:::
+
+::::
+
+. . . 
+
+What _type_ of join? What _column(s)_ to join?
+
+
+## 1. Defining Success
+
+`inner_join` on `tconst`/`tconst` to find matching rows: 
+
+```{r}
+#| echo: true
+#| eval: false
+TITLE_BASICS  |>
+    inner_join(TITLE_RATINGS,
+               join_by(tconst == tconst))
+```
+
+```{r}
+#| echo: false
+#| eval: true
+TITLE_BASICS  |>
+    inner_join(TITLE_RATINGS,
+               join_by(tconst == tconst)) |> 
+    select(tconst, primaryTitle, averageRating, numVotes) |>
+    slice_max(numVotes, n=10) |>
+    gt()
+```
+
+## 1. Defining Success
+
+`inner_join` on `tconst`/`tconst` to find matching rows: 
+
+```{r}
+#| echo: true
+#| eval: false
+TITLE_BASICS  |>
+    inner_join(TITLE_RATINGS,
+               join_by(tconst == tconst))
+```
+
+```{r}
+#| echo: false
+#| eval: true
+TITLE_BASICS  |>
+    inner_join(TITLE_RATINGS,
+               join_by(tconst == tconst)) |> 
+    ggplot(aes(x=numVotes, y=averageRating)) + 
+    geom_point(alpha=0.2) + 
+    geom_smooth() + 
+    scale_x_log10() + 
+    theme_bw() + 
+    xlab("Number of IMDb Votes") + 
+    ylab("Average IMDb Rating")
+```
+
+
+## 1. Defining Success
+
+Possible metric: 
+
+$$S = \frac{\text{Number of Votes}}{1 + e^{-\text{Average Rating}}}$$
+
+. . . 
+
+How can we validate?
+
+## 1. Defining Success
+
+Top Movies: 
+
+```{r}
+#| echo: false
+TITLE_SUCCESS <- TITLE_BASICS |> 
+    select(tconst, primaryTitle, startYear) |> 
+    inner_join(TITLE_RATINGS, join_by(tconst == tconst)) |> 
+    mutate(success = numVotes / (1 + exp(-averageRating)))
+
+TITLE_SUCCESS |> 
+    slice_max(success, n=10) |> 
+    gt() |>
+    tab_header("Top Films (per Logistic Success Metric)") |>
+    cols_hide(tconst) |>
+    cols_label(primaryTitle="Title", 
+               startYear="Release Year",
+               success="Success Metric",
+               numVotes="Number of IMDb Ratings",
+               averageRating="Average Rating")
+```
+
+## 1. Defining Success
+
+Bottom Films: 
+
+```{r}
+#| echo: false
+TITLE_SUCCESS |> 
+    slice_min(success, n=5) |> 
+    gt() |>
+    tab_header("Bottom Films (per Logistic Success Metric)") |>
+    cols_hide(tconst) |>
+    cols_label(primaryTitle="Title", 
+               startYear="Release Year",
+               success="Success Metric",
+               numVotes="Number of IMDb Ratings",
+               averageRating="Average Rating")
+```
+
+. . . 
+
+I don't know these - not box office success, but maybe not terrible
+
+## 1. Defining Success
+
+Lowest rated film with $>100,000$ of ratings, *The Room*:
+
+::: {.center}
+
+{{< video https://www.youtube.com/watch?v=aekfPU0SwNw width="800" height="400" >}}
+
+:::
+
+# Genre
+
+Identify a good genre for your film.
+
+*(Speeding up a bit now for time)*
+
+## 2. Picking a Genre
+
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+Ratings Table:
+
+```{r}
+#| echo: false
+TITLE_RATINGS |> 
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_RATINGS")
+```
+
+:::
+
+::: {.column width="40%"}
+
+Movies Table:
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    select(tconst, primaryTitle) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_BASICS")
+```
+
+:::
+
+::::
+
+. . . 
+
+What _type_ of join? What _column(s)_ to join?
+
+## 2. Picking a Genre
+
+Genre success: 
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    separate_longer_delim(genres, ",") |>
+    rename(genre=genres)|> 
+  select(tconst, genre) |>
+  inner_join(TITLE_SUCCESS, 
+             join_by(tconst==tconst)) |>
+  filter(startYear > 2000) |> 
+  group_by(genre) |>
+  summarize(n_productions = n(), 
+            p_success = mean(success > 100000), 
+            n_success = sum(success>100000)) |> 
+  arrange(desc(p_success)) |>
+  gt() |>
+  cols_label(genre="Genre",
+             p_success="Fraction of Successes",
+             n_success="Number of Successes", 
+             n_productions="Total Number of Films") |>
+    fmt_percent(p_success, decimals=2)
+```
+
+
+# Remake
+
+Find a classic movie to remake with your key talent. The original should have
+a large number of IMDb ratings, a high average rating, and not have been remade
+in the past 25 years.
+
+
+## 3. Remake
+
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+Ratings Table:
+
+```{r}
+#| echo: false
+TITLE_RATINGS |> 
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_RATINGS")
+```
+
+:::
+
+::: {.column width="40%"}
+
+Movies Table:
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    select(tconst, primaryTitle) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_BASICS")
+```
+
+:::
+
+::::
+
+. . . 
+
+What _type_ of join? What _column(s)_ to join?
+
+## 3. Remake
+
+Top 10 Sci-Fi Films of All Time: 
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    select(tconst, genres) |>
+    inner_join(TITLE_SUCCESS, 
+               join_by(tconst==tconst)) |>
+    filter(str_detect(genres, "Sci-Fi")) |> 
+    group_by(primaryTitle) |> 
+    summarize(max_success = max(success), 
+              latest_made = max(startYear), 
+              versions=n()) |> 
+    arrange(desc(max_success)) |>
+    slice_max(max_success, n=10) |>
+    gt() |>
+    cols_label(primaryTitle="Title", 
+               latest_made="Latest Release",
+               versions="Number of Remakes",
+               max_success="Peak Score")
+```
+
+## 3. Remake
+
+![](./avengers_alt_imdb.png){fig-align="center" width="90%"}
+
+# Director
+
+
+Identify a director for your film. This should be someone with a 
+track-record of successful films in your chosen genre. Ideally, they will not
+have worked in your genre recently - perhaps having a flop in a different genre 
+- and you will be able to market your film as a 'triumphant return to form'.
+
+## 4. Director
+
+
+:::: {.columns}
+
+::: {.column width="20%"}
+
+Ratings Table:
+
+```{r}
+#| echo: false
+TITLE_RATINGS |> 
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_RATINGS")
+```
+
+:::
+
+::: {.column width="20%"}
+
+Movies Table:
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    select(tconst, primaryTitle) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_BASICS")
+```
+
+:::
+
+::: {.column width="20%"}
+
+People Table:
+
+```{r}
+#| echo: false
+NAME_BASICS |> 
+    select(nconst, primaryName) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("NAME_BASICS")
+```
+
+:::
+
+::: {.column width="40%"}
+
+Credits Table:
+
+```{r}
+#| echo: false
+TITLE_CREW |> 
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_CREW")
+```
+
+:::
+
+::::
+
+## 4. Director
+
+We need a _four way_ join: 
+
+- RATINGS to BASICS: to get scores and genre
+- BASICS to CREW: to get director ID
+- CREW to NAMES: to convert director ID (`nconst`) to actual names
+
+. . . 
+
+```{r}
+#| echo: true
+#| eval: false
+TITLE_BASICS |> 
+    inner_join(TITLE_SUCCESS, 
+               join_by(tconst==tconst)) |>
+    inner_join(TITLE_CREW, 
+               join_by(tconst==tconst)) |>
+    inner_join(NAME_BASICS, 
+               join_by(directors==nconst))
+```
+
+Read `|>` as _and then_
+
+## 4. Director
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    select(tconst, genres) |>
+    inner_join(TITLE_SUCCESS, 
+               join_by(tconst==tconst)) |>
+    inner_join(TITLE_CREW, 
+               join_by(tconst==tconst)) |>
+    inner_join(NAME_BASICS, 
+               join_by(directors==nconst)) |>
+    mutate(scifi = str_detect(genres,"Sci-Fi")) |>
+    group_by(primaryName, scifi) |>
+    summarize(n_films = n(), 
+              latest = max(startYear), 
+              average_success = mean(success)) |>
+    ungroup() |>
+    pivot_wider(id_cols=primaryName, 
+                names_from=scifi, 
+                values_from=c(n_films, latest, average_success), 
+                names_glue="{.value}_scifi_{scifi}", 
+                values_fill=0) |>
+    filter(average_success_scifi_TRUE > 700000, 
+           latest_scifi_FALSE > 2015,
+           latest_scifi_TRUE < 2015) |>
+    arrange(desc(average_success_scifi_TRUE / average_success_scifi_FALSE)) |>
+    gt(id="tbl_top_directors") |>
+    cols_label(primaryName="Director Name") |> 
+    tab_header("Top Sci-Fi Directors") |>
+    tab_spanner(
+        label="Sci-Fi",
+        columns=ends_with("_TRUE")) |>
+    tab_spanner(
+        label="NonSci-Fi",
+        columns=ends_with("_FALSE")) |>
+    cols_label(
+        contains("n_films") ~ "Number of Films",
+        contains("latest") ~ "Latest Film", 
+        contains("average") ~ "Average Success Score"
+    )
+```
+
+## 4. Director
+
+![](https://upload.wikimedia.org/wikipedia/commons/b/b8/Michel_Gondry_Deauville_2012_%28cropped%29.jpg){width="40%" fig-align="center"}
+
+## 4. Director
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+2004: **Eternal Sunshine**
+
+![](https://upload.wikimedia.org/wikipedia/en/a/a4/Eternal_Sunshine_of_the_Spotless_Mind.png){fig-align="center" width="100%"}
+
+:::
+
+::: {.column width="40%"}
+
+2011 **Green Hornet**
+
+![](https://upload.wikimedia.org/wikipedia/en/f/fa/The_Green_Hornet_Poster.jpg){fig-align="center" width="100%"}
+
+:::
+
+::::
+
+# Actors
+
+Identify two stars with multiple credits to their name to take the leading roles
+in your film. These should be actors with a strong track record of success 
+who have not worked in your chosen genre before.
+
+## 5. Actors
+
+New constraint: **have not worked in Sci-Fi**
+
+:::: {.columns}
+
+::: {.column width="20%"}
+
+Ratings Table:
+
+```{r}
+#| echo: false
+TITLE_RATINGS |> 
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_RATINGS")
+```
+
+:::
+
+::: {.column width="20%"}
+
+Non-SciFi Movies Table:
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    filter(str_detect(genres, "Sci-Fi")) |>
+    select(tconst, primaryTitle) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_BASICS_SCIFI")
+```
+
+:::
+
+::: {.column width="20%"}
+
+People Table:
+
+```{r}
+#| echo: false
+NAME_BASICS |> 
+    select(nconst, primaryName) |>
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("NAME_BASICS")
+```
+
+:::
+
+::: {.column width="40%"}
+
+Credits Table:
+
+```{r}
+#| echo: false
+TITLE_CREW |> 
+    slice_sample(n=5) |>
+    gt() |>
+    tab_header("TITLE_CREW")
+```
+
+:::
+
+::::
+
+## 5. Actors
+
+![](./anti_join.png){fig-align="center" width="30%"}
+
+
+
+`anti_join` people and Sci-Fi movies: 
+
+::: {.incremental}
+
+- `anti_join` finds rows _without_ a match
+- actors _without_ a sci-fi credit
+
+:::
+
+## 5. Actors
+
+![](https://upload.wikimedia.org/wikipedia/en/9/97/Doc_Brown.JPG){width="50%" fig-align="center"}
+
+## 5. Actors
+
+```{r}
+#| echo: false
+NO_SCIFI_HISTORY_ACTORS <- TITLE_BASICS |> 
+    select(tconst, genres) |>
+    inner_join(TITLE_SUCCESS, 
+               join_by(tconst==tconst)) |>
+    inner_join(TITLE_PRINCIPALS, 
+               join_by(tconst==tconst)) |>
+    inner_join(NAME_BASICS, 
+               join_by(nconst==nconst)) |>
+    mutate(scifi = str_detect(genres,"Sci-Fi")) |>
+    group_by(primaryName) |>
+    filter_out(any(scifi)) |> 
+    summarize(n_films = n(), 
+              first = min(startYear),
+              latest = max(startYear), 
+              average_success = mean(success))
+
+NO_SCIFI_HISTORY_ACTORS |>
+    filter(n_films > 20) |>
+    slice_max(average_success, n=10) |>
+    gt(id="tbl_top_actors_doc") |>
+    cols_label(
+        primaryName="Actor for Doc Brown",
+        n_films="Number of Major Acting Credits",
+        latest="Latest Credit",
+        average_success="Average Success"
+    ) |>
+    cols_hide(first)
+```
+
+## 5. Actors
+
+![](https://upload.wikimedia.org/wikipedia/en/d/d8/Michael_J._Fox_as_Marty_McFly_in_Back_to_the_Future%2C_1985.jpg){width="40%" fig-align="center"}
+
+## 5. Actors
+
+```{r}
+#| echo: false
+NO_SCIFI_HISTORY_ACTORS |> 
+    slice_max(first) |>
+    gt(id="tbl_top_actors_marty") |>
+    cols_label(primaryName="Actor for Marty McFly", 
+               n_films="Number of Major Acting Credits",
+               first="Film Debut", 
+               average_success="Average Success") |>
+    cols_hide(latest)
+```
+
+. . .
+
+![](./johannes.jpg){width="65%" fig-align="center"}
+
+
+# Pitch
+
+##
+
+![](./poster.jpg){width="50%" fig-align="center"}
 
