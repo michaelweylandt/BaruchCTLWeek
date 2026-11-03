@@ -1,0 +1,1296 @@
+---
+title: "Teaching Demo: The Business of Show Business"
+format:
+  live-html
+resources:
+  - "docs/data/processed"
+---
+
+{{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+library(tidyverse)
+library(gt)
+library(httr2)
+```
+
+```{webr}
+#| autorun: true
+#| message: false
+#| echo: false
+suppressPackageStartupMessages({
+  suppressMessages({
+    library(tidyverse)
+    library(gt)
+  })
+})
+```
+
+```{webr}
+#| autorun: true
+#| message: false
+#| echo: false
+NAME_BASICS <- read_csv("docs/data/processed/name_basics.csv.gz", 
+                        show_col_types=FALSE)
+```
+
+```{webr}
+#| autorun: true
+#| message: false
+#| echo: false
+NAME_BASICS_LONGER <- read_csv("docs/data/processed/name_basics_longer.csv.gz", 
+                        show_col_types=FALSE)
+```
+
+```{webr}
+#| autorun: true
+#| message: false
+#| echo: false
+TITLE_BASICS <- read_csv("docs/data/processed/title_basics.csv.gz", 
+                        show_col_types=FALSE)
+TITLE_BASICS_LONGER <- read_csv("docs/data/processed/title_basics_longer.csv.gz", 
+                        show_col_types=FALSE)
+```
+
+```{webr}
+#| autorun: true
+#| message: false
+#| echo: false
+TITLE_RATINGS <- read_csv("docs/data/processed/title_ratings.csv.gz",
+                          show_col_types=FALSE)
+TITLE_CREW <- read_csv("docs/data/processed/title_crew.csv.gz", 
+                       show_col_types=FALSE)
+TITLE_PRINCIPALS <- read_csv("docs/data/processed/title_principals.csv.gz",
+                             show_col_types=FALSE)
+```
+
+
+## Introduction
+
+In this project, you will play the role of a Hollywood development executive; 
+that is, you are the executive in charge of coming up with new movie ideas. 
+Historically, development executives would source the 'life rights' necessary to
+make “based on a true story” movies, would secure production options on 
+promising new novels, and would partner with owners of established intellectual 
+property (IP) to develop movie adaptations. Recently, however, the development 
+process has been criticized by Hollywood insiders and audiences alike for 
+over-reliance on rote sequels. Our goal is to develop a set of data-driven ideas
+for new movies. Before doing so, however, we will dive into Hollywood history to
+identify key characteristics of successful movies, to identify successful 
+filmmakers and actors, and to examine some of Hollywood's most famous flops.
+
+### Baruch Teaching Excellence Week
+
+This page contains a model teaching showcase lesson presented as part of
+the [2026 Teaching Excellence Week](https://blogs.baruch.cuny.edu/teachingexcellence/)
+organized by the [Center for Teaching and Learning](https://blogs.baruch.cuny.edu/ctl/)
+at Baruch College, CUNY. 
+
+This lesson is adapted from [a homework assignment from the Fall 2024 version of this
+course](https://michael-weylandt.com/STA9750/archive/AY-2024-FALL/miniprojects/mini02.html).
+Because the original assignment was for a programming-intensive graduate 
+statistics course, it has been modified and simplified to fit into a
+thirty-minute window and an 'in-person' event. 
+
+::: {.callout-caution title="Breaking the Fourth Wall"}
+
+I will use sections in an orange highlight block (like this one) to 
+'break the fourth wall' and explain my pedagogical motivations for certain
+key decisions. By default, I have 'folded' these so they don't break the 
+flow of the actual lesson; simply click on the title bar to expand and show
+more detail.
+
+:::
+
+Participants will be able to take part in this lesson in two ways: 
+
+1.  Paper printouts of the key analytical steps will be provided by CTL staff. 
+    These necessarily loose some of the 'open-endedness' of the original 
+    project, but participants will still be able to make some choices in a 
+    'choose-your-own adventure' format. 
+
+    A PDF containing these printouts can be found [here](./pdf_steps.pdf)
+   
+2.  Participants who have their laptops handy will be able to follow along with
+    the assignment on this page, using interactive code blocks like this: 
+   
+    ```{webr}
+    #| autorun: true
+    1 + 2 + 3
+    ```
+
+    Simply press `▶ Run Code` at the top right of each block to execute the 
+    code and see the results. I have pre-populated each block with example 
+    solutions for each step. Feel free to modify these in whatever way interests
+    you. To reset things to my suggested solutions, please click the 
+    `🔄 Start Over` button. 
+    
+    **NB**: Note that you will need to execute the code on this page from
+    top-to-bottom. You cannot just jump ahead to the later steps if the earlier
+    'setup' code has not been run. In particular, if you make a change in, say, 
+    Step 2. You will need to run the Step 2, 3, and 4 code blocks (in that order)
+    before seeing how your change to Step 2 alters the results of Step 5. If
+    everything goes horribly wrong and you need a 'nuke-it-from-orbit' full 
+    reset, simply refresh this page in your web browser.
+    
+Please wait until you have a 'Ready-to-Run' message (which will appear
+immediately after this paragraph) before attempting use of interactive
+functionality.
+    
+    
+```{webr}
+#| autorun: true
+#| echo: false
+message("Initialization complete. Exercises ready-to-run!")
+```
+
+
+### Course Context {#context}
+
+#### STA9750
+
+STA9750, the course from which this lesson was adapted, is a core requirement
+of the 
+[MS in Statistics](https://zicklin.baruch.cuny.edu/academic-programs/graduate/ms/statistics/) 
+and 
+[MS in Quantitative Methods & Modeling (QMM)](https://zicklin.baruch.cuny.edu/academic-programs/graduate/ms/quantitative-methods-modeling/)
+programs offered by the Department of Information Systems and Statistics (ISS)
+within the Zicklin School. STA9750 is also an elective commonly taken by students in 
+our [MS in Business Analytics and AI](https://zicklin.baruch.cuny.edu/academic-programs/graduate/ms/masters-in-ai-and-business-analytics/)
+program and 'analytics-flavored' tracks in other Zicklin programs. 
+This is an *intense* one-semester course that teaches students the most 
+important computational tools for working data scientists and business 
+analysts. 
+
+In our LLM moment, STA9750 has been restructured as an 'applied data analysis' 
+course, focusing on the habits and practices of effective data analysis and
+de-emphasizing traditional 'programming' fundamentals. As the marginal cost
+of *writing* code decreases, the relative value of *verification* and 
+*interpretation* has increased. To that end, I take an 'AI Positive' posture,
+allowing students full access to any (free-tier) LLM for the 'code-writing'
+portions of the assignments. Because they have access to these tools, I in 
+turn expect much more from them than I would have 10 years ago. In general, 
+students seem to appreciate this Faustian bargain that I have thrust upon 
+them[^faust]; for the instructor, it certainly is more rewarding (and more 
+exhausting) than teaching basic programming.
+
+[^faust]: You would be correct to note that calling this 'Faustian' when 
+students have no say in my expectations breaks the metaphor. I am a STEM 
+professor; you get what you pay for. 😈
+
+This assignment is adapted from the second of four 'mini-projects' that replace
+traditional homework. In each of these, I work students through a full
+'soup-to-nuts' data analysis project; early in the semester, I handle most
+of the steps for them, leaving only the final analysis and write-up for them
+to handle. As the semester progresses, I progressively remove this 
+scaffolding and give them ownership of more and more of the 'data science
+workflow'. Ultimately, this is intended to demonstrate the practices I encourage
+(and expect) them to use for their final project (in lieu of a traditional exam).
+
+For this assignment, students are responsible for the final three stages of
+the data science workflow: 
+
++---------------+--------------------------------------------+----------------------------------------+--------------------------------+
+|               | Contents                                   | Student Responsibility in this Project | Students Assume Responsibility |
++:=============:+:==========================================:+:======================================:+:===============================+
+| **Step #01**  | Data Identification & Evaluation           |                                        | Final Project                  |
++---------------+--------------------------------------------+----------------------------------------+--------------------------------+
+| **Step #02**  | Data Acquisition & Cleaning                |                                        | Mini-Project #04               |
++---------------+--------------------------------------------+----------------------------------------+--------------------------------+
+| **Step #03**  | Exploratory Analysis & Visualization       |                                        | Mini-Project #03               |
++---------------+--------------------------------------------+----------------------------------------+--------------------------------+
+| **Step #04**  | Combination & Alignment                    | **✓**                                  | Mini-Project #02               |
++---------------+--------------------------------------------+----------------------------------------+--------------------------------+
+| **Step #05**  | Descriptive and Inferential Analysis       | **✓**                                  | Mini-Project #01               |
++---------------+--------------------------------------------+----------------------------------------+--------------------------------+
+| **Step #06**  | Communication and Presentation of Findings | **✓**                                  | Mini-Project #01               |
++---------------+--------------------------------------------+----------------------------------------+--------------------------------+
+
+
+: Students' Responsibilities in the Data Science Workflow. Note that these steps
+are not 'one way' and exploratory analysis will occur both before and after
+combining data, visualization will be used to interpret analytical results, 
+*etc.* {.hover}
+
+#### `JOIN`ing Data Sources
+
+::: {.callout-caution title="Learning Objectives" collapse="true"}
+
+The new learning objectives of this assignment are centered on *combining* data
+from different tables to allow novel insights that cannot be gleaned from any 
+individual data source. By this point, students have already developed their
+skills manipulating data that has already been combined into one table, though
+they will build upon those skills in the later portions of this assignment. 
+
+If you 'speak database', this assignment basically covers SQL `JOIN` statements;
+it follows a 'single-table' lesson covering the `R` equivalent of 
+`SELECT`, `GROUP BY`, `WHERE/HAVING`, and their kin. 
+
+:::
+
+
+At this point, students are familiar with the ideas of `keys` as a (hopefully) 
+unique identifier within a data set. A prior in-class discussion has discussed
+examples of ID which are designed for use (*e.g.*, CUNY EmplID) and those 
+which are 'good enough' in a limited context (first name within a small class).
+We have also discussed how _changing scope_ makes a formerly great ID 
+insufficient (*e.g.*, EmplID is a sufficient ID for post-2000 CUNY students, but 
+would not suffice for registrar records (or the development office!) going back 
+to the first days of the Free Academy).
+
+Participants in this lesson need to know: 
+
+- A _key_ is a column (or combination of columns) that can be used to 'connect'
+  records across different data sources. 
+- We want _keys_ to be unique and never missing (all records need a key)
+- Bad things happen when non-unique keys are used to combine data sets
+- Joining by _identity_ is far more robust than joining by _position_. 
+
+  The first row of my data set may or may not match the first row of your data
+  set, but `Student 123456778` is likely to be the same across both.
+  
+> The key, the whole key, and nothing by the key. So help me Codd.
+
+## Showtime!
+
+### Data Identification {#dsw01}
+
+For this assignment, we will be using data from the 
+[Internet Movie Database (IMDB)](https://en.wikipedia.org/wiki/IMDb), an online
+data base of all things cinema. Specifically, we will be using data from their
+[Non-Commericial Dataset](https://datasets.imdbws.com/) page. These files
+are made freely available by IMDb for non-commercial use.
+
+
+::: {.callout-caution title="Data Identification"}
+
+I try to use a mix of easily understood data like this (Netflix Top 10, 
+Spotify charts, *etc*) and more technical info (BLS statistics, Transit
+systems, *etc*) over the semester. Because STA9750 attracts students with
+such varied backgrounds, it is important to show them that - wherever they are
+going - the skills they develop in this class can be applied. 
+
+In my experience, students want evidence that the skills we want them to develop
+are actually useful, but they don't actually demand applications to *whatever
+they care about*. Real applications to a real problem-even if not their problem-
+suffice.
+
+:::
+
+
+### Data Acquisition and Cleaning {#dsw02}
+
+
+::: {.callout-caution title="Show Everything"}
+
+Here, I show students the _entire_ workflow used to download, import, and 
+clean up the five data sets that are used in this assignment. While this might
+seem overwhelming, I find it is important to expose them to the whole process,
+even if they are not responsible for it yet. This has several benefits: 
+
+1) The students will submit a fully executable and reproducible document. It
+   will start by automatically downloading the data file (if needed) and finish
+   with their final figures and tables. This guarantees that the entire project
+   is self-contained and can be read without reference to my original assignment.
+   
+   For students who want to use projects like this as the basis for a professional
+   portfolio, this means their work truly stands on their own two feet.
+2) For later assignments, I can refer back to the code I share with them here
+   as an example of practices they should follow when they are responsible for
+   these initial set up steps. 
+3) Psychologically, this makes it clear to students that they are interacting
+   with *the real thing*, not a simplified and sanitized 'textbook' version of
+   a problem. When there are weirdnesses and inconsistencies, they are just a
+   fact of life to be dealt with - not a reason to complain and seek clarification.
+   
+:::
+
+
+The following code will automatically download and load these files
+into `R`: 
+
+```{r}
+#| label: 'imdb_name_basics'
+#| message: false 
+#| warning: false
+#| cache: true
+library(tidyverse)
+get_imdb_file <- function(fname){
+    BASE_URL <- "https://datasets.imdbws.com/"
+    fname_ext <- paste0(fname, ".tsv.gz")
+    fs::dir_create("data")
+    fname <- fs::path("data", fname_ext)
+    if(!fs::file_exists(fname)){
+        FILE_URL <- paste0(BASE_URL, fname_ext)
+        download.file(FILE_URL, 
+                      destfile = fname)
+    }
+    readr::read_tsv(fname, 
+                    lazy=FALSE, 
+                    show_col_types=FALSE, 
+                    n_max=1000000, # Increase for more accurate results
+                                   # We're currently using a subset for speed
+                    na="\\N") |>
+        mutate(across(ends_with("year"), as.numeric))
+}
+
+NAME_BASICS      <- get_imdb_file("name.basics")
+```
+
+```{r}
+#| label: 'imdb_title_basics'
+#| message: false 
+#| warning: false
+#| cache: true
+TITLE_BASICS     <- get_imdb_file("title.basics")
+```
+
+```{r}
+#| label: 'imdb_title_ratings'
+#| message: false 
+#| warning: false
+#| cache: true
+TITLE_RATINGS    <- get_imdb_file("title.ratings")
+```
+
+```{r}
+#| label: 'imdb_title_crew'
+#| message: false 
+#| warning: false
+#| cache: true
+TITLE_CREW       <- get_imdb_file("title.crew")
+```
+
+```{r}
+#| label: 'imdb_title_principals'
+#| message: false 
+#| warning: false
+#| cache: true
+TITLE_PRINCIPALS <- get_imdb_file("title.principals")
+``` 
+
+#### Data Sub-Sampling
+
+This data is large enough that we're going to need to immediately 
+start down-selecting to get to a data set that we can analyze fluidly. For
+our `NAME_BASICS` table, we'll restrict our attention to people with at 
+least two "known for" credits.[^1]
+
+```{r}
+#| label: 'name_basics_filter'
+#| cache: true
+NAME_BASICS <- NAME_BASICS |> 
+    filter(str_count(knownForTitles, ",") > 1)
+```
+
+IMDb has a _long_ tail of obscure titles: 
+
+```{r}
+#| label: 'title_ratings_tail'
+TITLE_RATINGS |>
+    ggplot(aes(x=numVotes)) + 
+    geom_histogram(bins=30) +
+    xlab("Number of IMDB Ratings") + 
+    ylab("Number of Titles") + 
+    ggtitle("Majority of IMDB Titles Have Less than 100 Ratings") + 
+    theme_bw() + 
+    scale_x_log10(label=scales::comma) + 
+    scale_y_continuous(label=scales::comma)
+```
+
+To keep our computers from working too hard, let's throw out any title
+with less than 500 ratings. It's not too hard to see that this drops
+about 75% of the entire data set: 
+
+```{r}
+#| label: 'title_ratings_quantile'
+TITLE_RATINGS |>
+    pull(numVotes) |>
+    quantile()
+```
+
+Applying this drop, we significantly reduce the size of our data set:
+
+```{r}
+#| label: 'title_ratings_filter'
+#| cache: true
+TITLE_RATINGS <- TITLE_RATINGS |>
+    filter(numVotes >= 500)
+```
+
+We want to perform the same filtering on our other `TITLE_*` tables.
+This is a rare use for the [`semi_join`](https://dplyr.tidyverse.org/reference/filter-joins.html).
+Recall that a `semi_join` returns only values which have a match,but
+doesn't actually add columns. 
+
+```{r}
+#| cache: true
+#| label: 'title_other_filter'
+#| message: false
+TITLE_BASICS <- TITLE_BASICS |>
+    semi_join(TITLE_RATINGS, 
+              join_by(tconst == tconst))
+
+TITLE_CREW <- TITLE_CREW |>
+    semi_join(TITLE_RATINGS, 
+              join_by(tconst == tconst))
+
+TITLE_PRINCIPALS <- TITLE_PRINCIPALS |>
+    semi_join(TITLE_RATINGS, join_by(tconst == tconst))
+```
+
+Finally, let's also restrict our attention to movies by filtering the
+`TITLE_BASICS` table to rows where `titleType` is `"movie"` and dropping
+`short`s, `tvMovie`s, `tvSeries`, `tvShort`s, *etc.* While I doubt that there
+are very many adult films with over 500 published reviews, let's also discard
+films where `isAdult` is flagged as `TRUE`. 
+
+```{r}
+#| label: title_filter_final
+#| cache: false
+TITLE_BASICS <- TITLE_BASICS |> 
+    filter_out(isAdult==1) |> 
+    filter(titleType=="movie")|>
+    select(-isAdult, -titleType) 
+```
+
+At this point, we've filtered down our data _significantly_ and are ready
+to begin analysis in earnest. **Note that our sub-sampling may induce some
+'dangling' references: some of the people dropped from the `NAME_BASICS`
+table may only appear in one famous movie, and we've likely lost their
+info.**
+
+At this point, we do have some rows that we would like to clean up: for
+certain projects, there may multiple credited directors or writers.[^dga] 
+These appear as comma-separated fields in our data files: *e.g.*, we see
+this in the `TITLE_CREW` table: 
+
+```{r}
+#| echo: false
+#| message: false
+library(gt)
+TITLE_CREW |> 
+    filter(str_detect(directors, ",") | str_detect(writers, ",")) |>
+    filter_out(is.na(writers)) |>
+    slice_head(n=10) |>
+    gt(id="tbl_crew_comma") |>
+    cols_label(tconst="Title ID", 
+               directors="Director(s)",
+               writers="Writer(s)") |>
+    tab_header("Selected Titles with Multiple Directors or Writers")
+```
+
+We can use the `separate_longer_delim()` function from the `tidyr` package
+to split these up as follows: 
+
+```{r}
+#| echo: false
+#| message: false
+library(gt)
+TITLE_CREW |> 
+    filter(str_detect(directors, ",") | str_detect(writers, ",")) |>
+    filter_out(is.na(writers)) |>
+    slice_head(n=10) |>
+    separate_longer_delim(directors, ",") |>
+    separate_longer_delim(writers, ",") |>
+    gt(id="tbl_crew_comma") |>
+    cols_label(tconst="Title ID", 
+               directors="Director(s)",
+               writers="Writer(s)") |>
+    tab_header("Selected Titles with Multiple Directors or Writers")
+```
+
+Note that this creates a **longer** data set than we originally started with
+because one title (one row) is transformed to multiple rows. We finish our
+pre-processing by applying this function to the `directors` and `writers`
+columns of the `TITLE_CREW` table, the `genres` column of the `TITLE_BASICS`
+table, and the `knownForTitles` of the `NAME_BASICS` column; here, I'm
+creating new 'longer' versions of each table instead of modifying the
+old table in place to avoid a difficult class of bugs that arise from having
+repeatedly duplicated rows in our primary working tables. [^prof]
+
+```{r}
+#| cache: true
+#| label: split_delim
+TITLE_CREW <- TITLE_CREW |> 
+    separate_longer_delim(directors, ",") |>
+    separate_longer_delim(writers, ",")
+
+NAME_BASICS_LONGER <- NAME_BASICS |>
+    separate_longer_delim(knownForTitles, ",") 
+
+TITLE_BASICS_LONGER <- TITLE_BASICS |> 
+    separate_longer_delim(genres, ",") |>
+    rename(genre=genres)
+```
+
+[^dga]: This is not as common as one might think. To prevent producer abuse,
+multiple credits are rather disfavored by the creative unions, especially by the
+Directors' Guild. See the [DGA Basic Agreement
+§7-208](https://www.dga.org/Contracts/Creative-Rights/Basic-Agreement-Article-7)
+for details. 
+
+[^prof]: Arguably, we should apply this to the `primaryProfession` column of
+the `NAME_BASICS` table as well, but we won't use that in our subsequent
+analysis, so it's safe to ignore for now. 
+
+
+### Combination and Alignment {#dsw03}
+
+To make the most of this data set, we will need to to **combine** all of the
+different tables together. Let's start by taking a look at each table separately. 
+As you review these, make sure to take note of the common columns (potential
+keys) that can be used to join across tables. 
+
+For each table, I am showing a (random) subset of 20 rows. The column names
+are shown at the top of each table, immediately below the table name. 
+
+```{r}
+#| echo: false
+NAME_BASICS |> 
+    slice_sample(n=20) |>
+    gt(id="tbl_name_basics") |>
+    tab_header("NAME_BASICS")
+```
+
+```{r}
+#| echo: false
+TITLE_BASICS |> 
+    slice_sample(n=20) |>
+    gt(id="tbl_title_basics") |>
+    tab_header("TITLE_BASICS")
+```
+
+```{r}
+#| echo: false
+TITLE_CREW |> 
+    slice_sample(n=20) |>
+    gt(id="tbl_title_crew") |>
+    tab_header("TITLE_CREW")
+```
+
+```{r}
+#| echo: false
+TITLE_RATINGS |> 
+    slice_sample(n=20) |>
+    gt(id="tbl_title_ratings") |>
+    tab_header("TITLE_RATINGS")
+```
+
+```{r}
+#| echo: false
+TITLE_PRINCIPALS |> 
+    slice_sample(n=20) |>
+    gt(id="tbl_title_principals") |>
+    tab_header("TITLE_PRINCIPALS")
+```
+
+In this case, there are sometimes *several* possible ways to join together a 
+pair of tables--for instance, we could connect the `TITLE_CREW` table to the 
+`NAME_BASICS` table by aligning *director* or *writer*. The following mental 
+checklist will help you maximize the probability that you're using the correct
+join for your analyses.[^foolproof]
+
+[^foolproof]: This process isn't fool-proof, but it should cover most use-cases.
+
+::: {.callout-note title="Selecting a Join" collapse="true"}
+
+1.  What two pieces of information am I looking to connect? *Answer(s)*: two
+    columns from different tables. (If the columns are already in the same 
+    table, you don't need a join.)
+2.  What is the common feature(s) I can use to join together these two tables? 
+    *Answer(s)*: one or more columns that have corresponding values in each 
+    table. It is not required for the columns to have the same name or the exact
+    same set of values in both tables. (If there is not a natural pair of 
+    combining columns, you might need to introduce a third table to your 
+    analyis.)
+3.  Join type: 
+
+    a) Do I want to *guarantee* use all of the rows from Table 1, filling in with
+       missing values if no corresponding row is found in Table 2? 
+    b) Do I want to *guarantee* use all of the rows from Table 2, filling in with
+       missing values if no corresponding row is found in Table 1? 
+      
+    If "yes/yes", you probably want a `full_join`; if "yes/no", you probably want
+    a `left_join`; if "no/yes", you probably want a `right_join`; if "no/no", you
+    probably want an `inner_join`.
+4.  Construct a potential join: 
+
+    ```{r}
+    #| eval: false
+    JOIN_TYPE(TABLE_1_NAME, 
+              TABLE_2_NAME, 
+              join_by(TABLE_1_KEY_COLUMN == TABLE_2_KEY_COLUMN))
+    ```
+    
+    Here, replace all values with the answers from your questions above. (We
+    are not considering non-equality joins here.)
+5.  Run your join and make sure you get no "many-to-many" or "many-to-one" 
+    warnings.
+6.  Embed your join into your full analysis
+   
+For example, if we want to answer the question "Who played guitar in which bands?"
+using the `band_members` and `band_instruments` tables in the `dplyr` package,
+the join-design flowchart would go something like this: 
+
+1.  I want to connect the `plays` column from `band_instruments` to the `band`
+    column of `band_members`. 
+2.  The common feature ("key") connecting the `band_instruments` and `band_members`
+    table is the `name` column, which has the same name and consistent values in 
+    both tables. 
+3.  a. I am fine dropping rows from the `band_instruments` table if I am unable
+       to determine what band someone was a part of. 
+    b. I am fine dropping rows from the `band_members` table if I am unable to
+       determine what instrument someone played. 
+      
+    These suggest I want to use an `inner_join`. 
+4.  My candidate join is: 
+   
+    ```{r}
+    library(dplyr)
+    inner_join(band_members, 
+               band_instruments, 
+               join_by(name == name))
+    ```
+5.  This runs without any warnings or other danger signs, so I'm good to proceed.
+6.  I can use this join to find one guitarist in my data set with a known band: 
+
+    ```{r}
+    library(dplyr)
+    inner_join(band_members, 
+               band_instruments, 
+               join_by(name == name)) |>
+        filter(plays == "guitar") 
+    ```
+    so the one row in our result is John (Lennon) playing guitar in the Beatles.
+    Sadly, our datasets were incomplete and we lost track of 
+    [Keith Richards](https://en.wikipedia.org/wiki/Keith_Richards), guitarist in
+    the Rolling Stones. 
+    
+:::
+
+::: {.callout-important title="Question 1: Join Practice"}
+
+Identify the joins necessary to answer the following questions. For each 
+question, make sure to clearly justify: 
+
+- What type of join is appropriate (and why)
+- Which column(s) should be used for the join. Note that the names may not be 
+  the same in each table, so be sure to carefully note the name 
+  *in each table* in case they differ.
+
+You do not need to actually answer these, but make sure you know _how_ you might
+begin to answer each question. 
+
+1. What titles is the actor Harrison Ford most known for?
+
+2. Who is the most active director (most director credits) in this data set? 
+
+3. Of titles with over 100,000 ratings, what is the most highly rated (highest
+   average rating) title in this data set? 
+
+4. Since 2020, what has been the average rating of a movie in the Musical 
+   genre? 
+
+*Hint:* It may be useful to create a "map" of which columns map to which tables
+before attempting these questions. While these can be [quite
+formal](https://duckduckgo.com/?q=sql+schema+map&iax=images&ia=images) and can
+be created with specialized software like <http://dbdiagram.io>, even 
+some basic sketches on a scratch piece of paper are often quite clarifying.
+
+:::
+
+
+::: {.callout-tip title="Example Answer 1: Join Practice" collapse="true"}
+
+1.  Because Harrison Ford is a person, we start with the `NAME_BASICS` table. 
+    Ideally, we could answer this question by looking at the `knownForTitles`
+    column, but this has uninterpretable internal identifiers instead of actual
+    names. To translate to actual names, we need to connect to the 
+    `TITLE_BASICS` table. In this case, we need to join `knownForTitles` from 
+    `NAME_BASICS_LONGER` to `tconst` in `TITLE_BASICS`. Here, I can use the 
+    `LONGER` name basics because I don't mind the duplicates - I **want** 
+    multiple rows in my answers.
+    
+    In this case, a standard `inner_join()` is fine. We only are interested
+    in the _intersection_ of Harrison Ford's most noteworthy titles and their
+    names, so we are fine dropping unmatched values.
+    
+    ```{webr}
+    NAME_BASICS_LONGER |> 
+        filter(primaryName == "Harrison Ford", 
+               birthYear == 1942 # Make sure to ignore the silent-film era Ford
+               ) |>
+        inner_join(TITLE_BASICS, 
+                   join_by(knownForTitles == tconst)) |>
+        select(primaryName, knownForTitles, primaryTitle) 
+    ```
+   
+
+2.  Director credits can be inferred from the `directors` column of the `TITLE_CREW`
+    data set. We want to map this to a name from the `NAME_BASICS` table. To align
+    our two tables, we want `TITLE_CREW`'s `directors` to match `NAME_BASICS`'s
+    `nconst`. 
+    As before, we are only interested in the _intersection_ of these two tables, 
+    so an `inner_join()` will suffice. 
+
+    ```{webr}
+    TITLE_CREW |> 
+        count(directors) |> 
+        slice_max(n) |> 
+        inner_join(NAME_BASICS_LONGER, 
+                   join_by(directors == nconst)) |> 
+        select(primaryName, birthYear, deathYear, n_credits=n) |> 
+        distinct()
+    ```
+
+3. 
+
+4. 
+
+:::
+
+
+
+
+
+### Exploratory Data Analysis (EDA) {#dsw04}
+
+::: {.callout-caution title="Guided Exploration"}
+
+An important skill for students to learn is 'data orienteering', situating
+themselves within a new data set. While many approaches to this sort of
+Exploratory Data Analysis (EDA) task have been proposed, my favorite is 
+simple: 'ask a bunch of questions and see what you find out.'  I pose warm-up
+questions to students to seed ideas for the questions they might ask to produce
+their final deliverable. My goal in these is to show students that there isn't
+*one* right answer to any meaningful question.
+
+For this demo, I'm keeping these relatively short, but this typically forms
+the bulk of the assignment. 
+
+:::
+
+#### Quantifying Success
+
+Our goal is to proposal successful new movies. To do so, we need
+a way of measuring the success of a movie given only IMDb ratings.[^3] While
+there's no "magic number" for success, it is logical to assume that a
+successful project will have both a high average IMDb rating, indicating
+quality, and a large number of ratings, indicating broad awareness in the
+public. 
+
+
+::: {.callout-important title="Question 2: Success Metric"}
+
+Design a 'success' measure for IMDb entries, reflecting both quality and
+broad popular awareness. 
+
+Validate your success metric as follows: 
+
+1. Choose the top 5-10 movies on your metric and confirm that they were
+   indeed box office successes.
+2. Choose 3-5 movies with large numbers of IMDb votes that score poorly
+   on your success metric and confirm that they are indeed of low quality.
+3. Choose a prestige actor or director and confirm that they have many projects
+   with high scores on your success metric.
+4. Come up with a numerical threshold for a project to be a 'success'; that is,
+   determine a value $v$ such that movies above $v$ are all "solid" or better.
+   
+:::
+
+
+::: {.callout-tip title="Example Answer 2: Success Metric" collapse="true"}
+
+I am a **particularly** avaricious vulture, so my success metric will depend
+almost exclusively on box office revenue, which I will proxy with the 
+*quantity* of IMDb ratings. I only want to use *quality* to avoid 
+'review bombs', where internet hordes rate a movie just to express their 
+distaste even if they don't see the film. To be clear, I have no qualms 
+whatsoever about producing a film that everyone hates, as long as they pay me to
+hate it. 
+
+After a bit of experimentation, the following success score seems to work well:
+
+$$\text{Success} = \frac{\text{Quantity of Ratings}}{1 + e^{-\text{Avg Rating}}}$$
+
+To implement this in code, I need to *join* together my table of movies 
+(`TITLE_BASICS`) with my table of ratings (`TITLE_RATINGS`). In this case, the
+join is straightforward as I can use the `tconst` column from both tables. An
+`inner_join()` works well here since I only am interested in looking at movies
+where I actually have sufficient info to compute my success metric. 
+
+This join is easy to implement: 
+
+```{webr}
+#| autorun: true
+TITLE_SUCCESS <- TITLE_BASICS |> 
+    select(tconst, primaryTitle, startYear) |> 
+    inner_join(TITLE_RATINGS, join_by(tconst == tconst)) |> 
+    mutate(success = numVotes / (1 + exp(-averageRating)))
+```
+
+From here, we can look at the top-scoring films: 
+
+```{webr}
+#| autorun: true
+TITLE_SUCCESS |> slice_max(success, n=10)
+```
+
+I would be proud (of how much money I would make) if I were to produce any of
+those films. On the tail end of the spectrum, we see some definite failures: 
+
+```{webr}
+#| autorun: true
+TITLE_SUCCESS |> slice_min(success, n=5)
+```
+
+A more robust verification would be to find a movie with a high number of 
+ratings (for some reason) but still a (relatively) low success score. 
+
+```{webr}
+#| autorun: true
+TITLE_SUCCESS |> filter(numVotes > 100000) |> slice_min(success)
+```
+
+Yep - that's a stinker[^haimark]!
+
+To see how this plays out in a career, let's look at Denzel Washington, 
+who was recentlycrowned [the greatest actor of the
+century](https://www.nytimes.com/interactive/2020/movies/greatest-actors-actresses.html#denzel-washington) 
+by the New York *Times*. We can pull out his top films: 
+
+```{webr}
+#| autorun: true
+TITLE_SUCCESS |> 
+  inner_join(TITLE_PRINCIPALS, join_by(tconst==tconst)) |> 
+  inner_join(NAME_BASICS, join_by(nconst==nconst)) |> 
+  filter(primaryName == "Denzel Washington") |>
+  arrange(desc(success)) |> 
+  slice_max(success, n=5)
+```
+
+Absolute hits all. And on the other end of the spectrum: 
+
+```{webr}
+TITLE_SUCCESS |> 
+  inner_join(TITLE_PRINCIPALS, join_by(tconst==tconst)) |> 
+  inner_join(NAME_BASICS, join_by(nconst==nconst)) |> 
+  filter(primaryName == "Denzel Washington") |>
+  arrange(desc(success)) |> 
+  slice_min(success, n=5)
+```
+
+Some of these were real flops, but *Mississippi Masala* is a respected classic
+among cinephiles, absolutely the sort of thing we would hate to produce. 
+
+If we look at the total career of Denzel, a success bar around 100,000 seems 
+correct. This gives us Pelican Brief as our 'lowest performing' success
+and [the Siege](https://en.wikipedia.org/wiki/The_Siege) as our 'best failure'.
+
+:::
+
+
+[^haimark]: Perhaps the nadir of all Hollywood: {{< video https://www.youtube.com/watch?v=aekfPU0SwNw >}}
+
+
+#### Examining Success by Genre and Decade
+
+Now that you have a working proxy for success, it's time to look at trends in
+success over time 
+
+::: {.callout-important title="Question 3: Picking a Genre"}
+
+Identify a good genre for your next film. You do not need to answer these 
+questions precisely, but these are may help guide your thinking. 
+
+-   What was the genre with the most "successes" in each decade? 
+-   What genre consistently has the most "successes"? What genre used to 
+    reliably produced "successes" and has fallen out of favor? 
+-   What genre has produced the most "successes" since 2000? Does it have the
+    highest success _rate_ or does it only have a large number of successes
+    because there are many productions in that genre? 
+-   What genre has become more popular in recent years? 
+
+:::
+
+Based on your findings, select a genre for your next project. Note that you may
+wish to avoid an "oversatured" genre; you just need to make the argument that
+your proposal is a _good_ investment, not necessarily the most _studio-produced
+focus-grouped committee-designed generic satisfying_ choice, so feel free to
+lean in to your own artistic preferences, as long as you can make an argument
+for them.
+
+
+::: {.callout-tip title="Example Answer 3: Picking a Genre" collapse="true"}
+
+Inspired by the questions above, I can compute the success rates of different 
+genres over the past 25 years: 
+
+```{webr}
+#| autorun: true
+TITLE_BASICS_LONGER |> 
+  select(tconst, genre) |>
+  inner_join(TITLE_SUCCESS, 
+             join_by(tconst==tconst)) |>
+  filter(startYear > 2000) |> 
+  group_by(genre) |>
+  summarize(p_success = mean(success > 100000), 
+            n_productions = n(), 
+            n_success = sum(success>100000)) |> 
+  arrange(desc(p_success))
+```
+
+From this, I see a market gap in Sci-Fi films, which are almost as consistently
+successful as adventure films, but are produced at about half the rate. 
+
+:::
+
+### Analysis {#dsw05}
+
+
+::: {.callout-caution title="Scaffold to the End"}
+
+Once students are (hopefully) comfortable working with the data, I walk them
+through the rest of the analysis. The questions I ask here are typically 
+intentionally a bit vague, giving students the ability to put their own stamp
+and express their own preferences in their analysis. By making these vague and
+soliciting preferences, I try to ensure that no students have the same answers
+at the end of the assignment. Then, when students participate in a 'code review'
+cycle, they can compare how they approached an open-ended prompt with their 
+peers, instead only looking for binary 'right/wrong' answers. Personal 
+preference isn't the only way to make questions open ended, but it seems to
+make the point more effectively than other phrasings.
+
+:::
+
+#### The Story
+
+Now that you have found a target genre for your project and have identified
+the iconic stories in the genre, you need a story. Like any good development 
+executive, *i.e.* soulless Hollywood suit, your first instinct should 
+be to produce a remake of a classic film in the genre. 
+
+::: {.callout-important title="Question 4: Finding a Classic Movie to Remake"}
+
+Find a classic movie to remake with your key talent. The original should have
+a large number of IMDb ratings, a high average rating, and not have been remade
+in the past 25 years.[^4] 
+
+:::
+
+
+::: {.callout-tip title="Example Answer 4: Finding a Classic Movie to Remake" collapse="true"}
+
+Given my analysis above, I have decided to remake a classic Sci-Fi film: I'll
+use a similar join strategy as the previous question to get a set of
+all-time Sci-Fi greats. Here, I've grouped movies by `primaryTitle` (to identify
+potential remakes) and recorded the highest success score ever for that film
+and the highest (latest) year in which it was (re-)made: 
+
+```{webr}
+#| autorun: true
+TITLE_BASICS |> 
+    select(tconst, genres) |>
+    inner_join(TITLE_SUCCESS, 
+               join_by(tconst==tconst)) |>
+    filter(str_detect(genres, "Sci-Fi")) |> 
+    group_by(primaryTitle) |> 
+    summarize(max_success = max(success), 
+              latest_made = max(startYear), 
+              versions=n()) |> 
+    arrange(desc(max_success))
+```
+
+From these, I see several potential films last made pre-2000. Of them, *The 
+Matrix* was the most successful, but it has had some follow-ups so we don't
+want to touch it; same for *Empire Strikes Back*. This leaves 
+*Back to the Future* as our film to remake.
+
+:::
+
+Once you have found your classic movie to remake, confirm whether key actors,
+directors, or writers from the original are still alive. If so, you need to 
+contact your legal department to ensure they can secure the rights to the 
+project. You may also want to include the classic actors as fan service.
+
+
+#### The Director
+
+To get the ball rolling, you next want to line up some behind-the-camera talent
+for your production. Because directors are the hardest to recruit to a 
+project[^post] and have strong opinions about the rest of the behind-the-camera
+crew, you are going to first identify a director to helm your film. You are new
+to the whole development game, so you plan on hiring a 'bankable' director who
+can't miss in the genre: think Fincher in thrillers or Del Toro in Dark Fantasy.
+
+[^post]: A director is typically on a film from pre-production all the way to 
+determining the final cut at the end of post-production; this can result in
+a time commitment that is _years_ longer than the actors. 
+
+::: {.callout-important title="Question 5: Finding Direction"}
+
+Identify a director for your film. This should be someone with a 
+track-record of successful films in your chosen genre. Ideally, they will not
+have worked in your genre recently - perhaps having a flop in a different genre 
+- and you will be able to market your film as a 'triumphant return to form'.
+
+:::
+
+
+
+::: {.callout-tip title="Example Answer 5: Finding Direction" collapse="true"}
+
+Given the above, we want to find the most successful sci-fi directors. This 
+requires a more complex join than what we have seen so far: we need to connect
+
+- `TITLE_SUCCESS` to get our success metric
+- `TITLE_BASICS` to get genre info
+- `TITLE_CREW` to get director IDs
+- `NAME_BASICS` to get director names
+
+The only way we can keep our religion here is to work with `inner_join()` 
+throughout, ensuring that we get only those films for which we have 
+all four pieces of information before we go hunting for our top directors. 
+
+```{webr}
+#| autorun: true
+SCIFI_HISTORY_DIRECTORS <- TITLE_BASICS |> 
+    select(tconst, genres) |>
+    inner_join(TITLE_SUCCESS, 
+               join_by(tconst==tconst)) |>
+    inner_join(TITLE_CREW, 
+               join_by(tconst==tconst)) |>
+    inner_join(NAME_BASICS, 
+               join_by(directors==nconst)) |>
+    mutate(scifi = str_detect(genres,"Sci-Fi")) |>
+    group_by(primaryName, scifi) |>
+    summarize(n_films = n(), 
+              latest = max(startYear), 
+              average_success = mean(success)) |>
+    ungroup() |>
+    pivot_wider(id_cols=primaryName, 
+                names_from=scifi, 
+                values_from=c(n_films, latest, average_success), 
+                names_glue="{.value}_scifi_{scifi}", 
+                values_fill=0)
+```
+
+That one is quite a lot to chew on, so let's do a bit of work to polish up 
+the presentation of our top sci-fi directors. 
+
+```{webr}
+#| autorun: true
+SCIFI_HISTORY_DIRECTORS |> 
+    filter(average_success_scifi_TRUE > 700000, 
+           latest_scifi_TRUE < 2020) |>
+    arrange(desc(average_success_scifi_TRUE / average_success_scifi_FALSE)) |>
+    gt(id="tbl_top_directors") |>
+    cols_label(primaryName="Director Name") |> 
+    tab_header("Top Sci-Fi Directors") |>
+    tab_spanner(
+        label="Sci-Fi",
+        columns=ends_with("_TRUE")) |>
+    tab_spanner(
+        label="NonSci-Fi",
+        columns=ends_with("_FALSE")) |>
+    cols_label(
+        contains("n_films") ~ "Number of Films",
+        contains("latest") ~ "Latest Film", 
+        contains("average") ~ "Average Success Score"
+    )
+```
+
+From this, it seems that Michel Gondry would benefit from a return to
+his Sci-Fi glory days of *Eternal Sunshine of the Spotless Mind*, a film
+which has been remarkably more successful than most of what he produced
+in the 20 following years.
+
+:::
+
+#### Star Power
+
+To round out your production, you need to identify two leading actors or
+actresses for your film. While you selected a director who would bring 
+credibility in the genre, for your stars, you are looking to identify
+major talent who have never acted in that sort of film.[^walter]
+
+::: {.callout-important title="Question 6: Star Light, Star Bright"}
+
+Identify two stars with multiple credits to their name to take the leading roles
+in your film. These should be actors with a strong track record of success 
+who have not worked in your chosen genre before. As you identify your actors, 
+consider whether you want a pair of greats coming together for the first
+time or whether you want a well-established duo. Similarly, do you want a 
+'quality guaranteed' actor-director pairing or something never before seen?
+
+:::
+
+
+::: {.callout-tip title="Example Answer 6: Star Light, Star Bright" collapse="true"}
+
+To cast our remake of *Back to the Future*, we need to identify a Doc Brown
+and a Marty McFly. For Doc Brown, we want a well-known and well-loved actor
+with a limited sci-fi resume. 
+
+```{webr}
+#| autorun: true
+NO_SCIFI_HISTORY_ACTORS <- TITLE_BASICS |> 
+    select(tconst, genres) |>
+    inner_join(TITLE_SUCCESS, 
+               join_by(tconst==tconst)) |>
+    inner_join(TITLE_PRINCIPALS, 
+               join_by(tconst==tconst)) |>
+    inner_join(NAME_BASICS, 
+               join_by(nconst==nconst)) |>
+    mutate(scifi = str_detect(genres,"Sci-Fi")) |>
+    group_by(primaryName) |>
+    filter_out(any(scifi)) |> 
+    summarize(n_films = n(), 
+              first = min(startYear),
+              latest = max(startYear), 
+              average_success = mean(success))
+
+NO_SCIFI_HISTORY_ACTORS |>
+    filter(n_films > 20) |>
+    slice_max(average_success, n=10) |>
+    gt(id="tbl_top_actors_doc") |>
+    cols_label(
+        primaryName="Actor for Doc Brown",
+        n_films="Number of Major Acting Credits",
+        latest="Latest Credit",
+        average_success="Average Success"
+    ) |>
+    cols_hide(first)
+```
+
+It's clear that Canadian icon, Mr. Mike Myers, is the optimal Doc Brown for
+our remake, with Tom Hanks as a worthy backup. 
+
+For Marty McFly, we want a new face on the scene, with only a few credits, but
+a strong track record.
+
+```{webr}
+#| autorun: true
+NO_SCIFI_HISTORY_ACTORS |> 
+    slice_max(first) |>
+    gt(id="tbl_top_actors_marty") |>
+    cols_label(primaryName="Actor for Marty McFly", 
+               n_films="Number of Major Acting Credits",
+               first="Film Debut", 
+               average_success="Average Success") |>
+    cols_hide(latest)
+```
+
+There's only one choice!
+
+At this point, our choice to use only a small subset of the data to ensure
+everything runs in browser might be coming back to bite us. 
+
+:::
+
+
+[^walter]: Best case scenario, you're hoping for a Brian Cranston situation: 
+Hal Wilkerson (*Malcom in the Middle*) to Walter White (*Breaking Bad*). You
+have carefully expunged *the Number 23* and *Stop! or my Mom will Shoot* from
+your mind. 
+
+    [![Stallone fell from grace like a Rock(y)](https://upload.wikimedia.org/wikipedia/en/a/ae/Momshootposter.jpg)](https://en.wikipedia.org/wiki/Stop!_Or_My_Mom_Will_Shoot)
+
+    [![How could this not have been great?](https://upload.wikimedia.org/wikipedia/en/c/cc/Number23.jpg)](https://en.wikipedia.org/wiki/The_Number_23)
+
+### Presentation of Findings {#dsw06}
+
+
+::: {.callout-info title="Question 7: Write and Deliver Your Pitch"}
+
+Now that you have completed your analysis, write an "elevator pitch" of 
+approximately 200-250 words for your proposed Hollywood project. This is the
+pitch you will bring to the studio head (your boss); if the studio head likes
+your pitch, you will be given a small sum of money to start securing the story
+rights and locking down tentative deals with key talent. 
+
+If your boss approves the pitch, you will need to have a brief trailer ready
+for the next quarterly earnings call. The marketing department has asked that
+you prepare a classic 90's style teaser for them. Adapt the following
+cliched formula for your pitch. 
+
+> From director D, the visionary mind between N1; and
+> From actor A, beloved star of N2; and
+> From actor A2, Hollywood icon of genre G,
+> Comes the timeless tail N3
+> A story of TOPIC, TOPIC, and TOPIC
+> Coming soon to a theater near you. 
+
+If you're creatively-minded, you could have some fun here using
+Generative tools to draft a script or mock up a movie poster for your
+pitch.
+
+:::
+
+
+::: {.callout-tip title="Example Answer 7: Write and Deliver Your Pitch" collapse="true"}
+
+![Generated using Google Gemini](./poster.jpg)
+
+What? It's scientifically optimal!
+
+:::
+
+
+[^1]: It's not entirely transparent who IMDb decides what projects an actor
+or director is "known for". Still, it's a reasonable filter that leaves us
+with more than enough to work with for this project. 
+
+[^3]: Sadly, I couldn't find permissively licensed movie box office data. If
+you are aware of some, please let me know!
+
+
+[^4]: In order to see that a movie has not been recently remade, it is
+sufficient to confirm that no movie has been made with the same name in the 
+past 25 years. 
+
+## General Remarks
+
+As you approach this project, recall there are no right or wrong answers. You
+are exploring data looking for _exciting_ and _actionable_ findings. You have
+several key decisions to make and you can support them with data, but the
+decisions are ultimately yours. This project is an exercise both in
+the "nuts-and-bolts" of analyzing a large data set and in using data to inform
+and refine what is ultimately still a "gut feeling" qualitative business
+decision. 
+
+As you iterate on this project, you will see that seemingly small different
+choices can produce very different results. That's ok! As data analysts, we
+are constantly faced with small and essentially arbitrary decisions. An 
+important "meta-skill" is knowing which of these decisions radically
+change our findings and which are meaningless. (An arbitrary decision
+with no impact on the bottom line is harmless; an arbitrary decision
+that could entirely change the plan for the next ten years is a problem.)
+Our responsibility is to _clearly_ communicate these choices to our partners
+and clients: then we can receive their feedback on which way they would like
+to proceed. 
+
+Working in tools like `Quarto` and `R` helps here: if
+we provide clean and reproducible code, it should be easy to modify to see
+how our final conclusions are changed. Graphics also play an essential role
+in this form of clear communication: a 'point estimate' like "Action A is
+the best" is far less interpretable than a chart showing the predicted outcomes
+of several different actions. 
+
+As you approach this project, focus on justifying and communicating the choices
+you make. Structure your argument to communicate both key findings and 
+uncertainties around them. Think about how you can use both document structure
+(headings vs subsections) and graphics to communicate with both clarity and nuance. 
+
+Good luck!
+
+------------------------------------------------------------------------
+
+This work ©2026 by [Michael Weylandt](https://michael-weylandt.com) is licensed
+under a [Creative Commons BY-NC-SA
+4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en) license.
+![](http://mirrors.creativecommons.org/presskit/buttons/88x31/png/by-nc-sa.png){width="10%"}

@@ -1,0 +1,471 @@
+---
+title: "[</br></br></br></br></br>Baruch Teaching Excellence Week 2026 -- Modeling Data Analysis </br>Last Updated: 2026-11-02]{.r-fit-text}"
+last_updated: "`r last_updated <- Sys.Date(); 
+                  last_updated |> format('%Y-%m-%d')`"
+format:
+  revealjs:
+    theme: [default, slide_styles.scss]
+    title-slide-attributes:
+      data-background-image: "https://michael-weylandt.com/STA9750/images/baruch_title.png"
+      data-background-size: 100% 100%
+    auto-stretch: false
+    announcement: false
+    echo: true
+    width: 1280
+    height: 720
+    center: false
+
+---
+
+# Review 
+
+## Single-Table Verbs
+
+`dplyr` single-table verbs
+
+::: {.incremental}
+
+- `select`, `filter`: Selecting rows and columns
+- `rename`, `mutate`: Changing rows and columns
+- `summarize`, `group_by`: Combining multiple rows
+- `arrange`, `slice_min/max`: Re-ordering
+
+:::
+
+. . . 
+
+[Lab #05 Review Activity](https://michael-weylandt.com/STA9750/labs/lab05.qmd#review)
+
+# Multi-Table Verbs
+
+## Multi-Table Analysis
+
+*Multiple Tables*:
+
+- More insights than from a single table
+- Maintain 'tidy' structure throughout
+
+Will create new (compound) rows: 
+
+- Dangers: *drops* and *(over) duplication*
+
+## Primary Keys
+
+_Keys_ are unique identifiers for individual records
+
+- Primary (one column) or compound (multiple columns together) 
+
+
+. . . 
+
+
+The history of corporate IT is largely one of (failed) primary keys
+
+- Finance: Tickers, Tickers + Exchange, Tickers + Share Class, CUSIP, ISIN,
+  SEDOL, ... 
+  
+  
+. . . 
+
+Meaningful true keys are vanishingly rare - cherish them when you find them
+
+Often 'unique enough' for an analysis
+
+`dplyr::group_by() + dplyr::count()` is helpful here
+
+
+## Keys in Your Life
+
+What _primary keys_ and _compound keys_ are used to identify you? 
+
+. . . 
+
+::: {.incremental}
+
+- CUNY EmplID
+- Name
+- Name + Birthday
+- Name + Birthday + ???
+- National ID Number (SSN?)
+
+:::
+
+## Joins
+
+Joins combine tables _by identity_ - not simple 'stacking' 
+
+Specify a _join key_ - ideally this is an actual key, but doesn't have to be
+
+In `dplyr`, we use the `join_by` function: 
+
+```{r}
+#| eval: false
+#| echo: true
+dplyr::join_by(table_1_name == table_2_name)
+```
+
+Here `table_1_name` and `table_2_name` are column names from two tables
+
+. . . 
+
+Join rows where these values are equal (advanced joins possible)
+
+## Inner and Outer Joins
+
+When tables are perfectly matched, not an issue: 
+
+```{r}
+#| echo: false
+library(dplyr)
+cunys <- tribble(~college, ~campus_borough, 
+             "CCNY", "Manhattan",
+             "Baruch", "Manhattan", 
+             "CSI", "Staten Island",
+             "York", "Queens")
+
+routes <- tribble(~borough_name, ~bus_code,
+                  "Manhattan", "M",
+                  "Staten Island", "S", 
+                  "Queens", "Q")
+```
+
+```{r}
+cunys
+```
+
+```{r}
+routes
+```
+
+## Inner and Outer Joins
+
+When tables are perfectly matched, not an issue: 
+
+```{r}
+inner_join(cunys, routes, join_by(campus_borough == borough_name))
+```
+
+Default to `inner` but irrelevant
+
+Note automatic repetition of `"M"` row
+
+## Inner and Outer Joins
+
+How to handle 'unaligned' values?
+
+. . . 
+
+Add MEC
+
+```{r}
+#| echo: false
+cunys <- tribble(~college, ~campus_borough, 
+                 "CCNY", "Manhattan",
+                 "Baruch", "Manhattan", 
+                 "CSI", "Staten Island",
+                 "York", "Queens", 
+                 "Medgar Evers", "Brooklyn")
+```
+
+```{r}
+#| echo: true
+cunys
+```
+
+## Inner and Outer Joins
+
+```{r}
+#| echo: true
+inner_join(cunys, routes, join_by(campus_borough == borough_name))
+```
+
+. . . 
+
+[MEC vanished!]{color="red"}
+
+## Inner and Outer Joins
+
+```{r}
+#| echo: true
+left_join(cunys, routes, join_by(campus_borough == borough_name))
+```
+
+MEC stays, but no bus code - `NA` value
+
+. . . 
+
+::: {.smaller}
+
+- `inner_join` - Keep only matches
+- `left_join` - Keep all rows in left (first) table even w/o matches
+- `right_join` - Keep all rows in right (second) table even w/o matches
+- `full_join` - Keep all rows from both tables, even w/o matches
+
+:::
+
+`left_` and `right_` are types of 'outer' joins
+
+## Selecting Joins
+
+Suppose we seek to join two tables, `x` and `y`: 
+
+![Figures from *R4DS* Textbook](https://michael-weylandt.com/STA9750/images/r4ds_2e_join_figs/fig19_2.png){width="30%"}
+
+. . . 
+
+- Some shared rows (`1` and `2`) but 
+- Some non-shared rows (`3` in table `x` and `4` in table `y`). 
+
+Different joins will differ in how they treat those non-shared rows. 
+
+## Multiply and Conquer
+
+_Conceptually_ think of starting with all possible pairs. 
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+- For us, $9 = 3 \times 3$ total possible pairings: 
+
+:::
+
+::: {.column width="40%"}
+
+
+![](https://michael-weylandt.com/STA9750/images/r4ds_2e_join_figs/fig19_3.png){width="70%"}
+
+:::
+
+::::
+
+::: {.smaller}
+
+*NB:* You do not generally want to _actually_ make all these pairs when dealing
+with large data - this is just a mental tool.
+
+:::
+
+## Multiply and Conquer
+
+Join specification (`join_by()`) controls which of these pairs survive. 
+
+- basic (equality) join: `join_by(x==y)`
+
+. . . 
+
+
+:::: {.columns}
+
+::: {.column width="40%"}
+
+All joins will capture the proper matches (`1` and `2`): 
+
+- the only difference is in the treatment of unmatched pairs. 
+
+:::
+
+::: {.column width="40%"}
+
+
+
+![](https://michael-weylandt.com/STA9750/images/r4ds_2e_join_figs/fig19_3.png){width="70%"}
+
+:::
+
+::::
+
+## Inner Join
+
+The most restrictive join -- the `inner_join` -- only captures _true matches_: 
+
+![](https://michael-weylandt.com/STA9750/images/r4ds_2e_join_figs/fig19_4.png){width="50%"}
+
+No match for the orange or yellow rows $\implies$ `inner_join` discards them. 
+
+## Left Join
+
+To keep the unmatched orange `3`, use a `left_join`: 
+
+![](https://michael-weylandt.com/STA9750/images/r4ds_2e_join_figs/fig19_5.png){width="40%"}
+
+. . . 
+
+- Keep everything in the left (`x`) table
+- Fill missing values with `NA` (`y` for orange row)
+
+## Right Join
+
+The `right_join` is the exact opposite: 
+
+![](https://michael-weylandt.com/STA9750/images/r4ds_2e_join_figs/fig19_6.png){width="40%"}
+
+. . . 
+
+- Keep everything in the right (`x`) table
+- Fill missing values with `NA` (`x` for yellow row)
+- `left_join(x, y) == right_join(y, x)`
+
+## Full Join
+
+`full_join` keeps everything: 
+
+![](https://michael-weylandt.com/STA9750/images/r4ds_2e_join_figs/fig19_7.png){width="40%"}
+. . . 
+
+- **NB**: doesn't force a match for orange `3` or yellow `4`. 
+- Both unmatched, both `NA`
+
+## Venn Diagrams as Joins
+
+If you think this all sounds like Venn diagrams and set theory, you aren't wrong:
+
+![](https://michael-weylandt.com/STA9750/images/dplyr_joins.svg){#center}
+
+## So Which One?
+
+Q: So which one should I **actually** use?
+
+. . . 
+
+A: No easy answer. Depends on the treatment of _missing values_. 
+
+. . . 
+
+- `inner_join()` drops missing values, simplifying later steps
+
+- outer joins (`left`, `right`, `full`) force you to interact with missing values
+
+. . . 
+
+Think about _what_ you will do with missing values. 
+
+- Report number of missing values: `left_join`
+- Discard and carry on: `inner_join`
+
+## Missingness
+
+Three models of missingness: 
+
+::: {.incremental}
+
+- Missing Completely at Random (MCAR) - Random & _Unrelated_ to QoIs
+  - Data Termites
+- Missing at Random (MAR) - Random, but Correlated to QoIs
+- Missing Not at Random (MNAR) - Adversarial
+  - Data Demons
+
+:::
+
+. . . 
+
+MCAR missingness is a strong and rare condition, but it's really the 
+only situation where it's **totally safe** to just drop missing values. 
+
+. . . 
+
+Why is it missing? 
+
+::: {.incremental .small} 
+
+- `flights` data: *missing* delays indicate cancelled flights. 
+   Should you throw them out when looking at on time performance? 
+-  weather data: data missing when tornado blows monitor off the roof. 
+   Impact on average wind speed?
+
+:::
+
+# Your Turn
+
+## Movie Development
+
+Long Example / 'Mini-Project': 
+
+- Roleplay as Holywood _Development Executive_
+- Come up with a movie pitch based on past successes
+
+## Data 
+
+From IMDB, 5 Tables: 
+
+- `NAME_BASICS`: Basic Info (Name, Year, Best Known For)
+- `TITLE_BASICS`: Basic Info (Title, Year, Genre, *etc.*)
+- `TITLE_RATINGS`: Average Rating + Number of Votes
+- `TITLE_CREW`: Writers and Directors
+- `TITLE_PRINCIPALS`: Actors, Composers, DPs, Editors, *etc*
+
+## Tables
+
+```{r}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(gt)
+get_imdb_file <- function(fname){
+    BASE_URL <- "https://datasets.imdbws.com/"
+    fname_ext <- paste0(fname, ".tsv.gz")
+    fs::dir_create("data")
+    fname <- fs::path("data", fname_ext)
+    if(!fs::file_exists(fname)){
+        FILE_URL <- paste0(BASE_URL, fname_ext)
+        download.file(FILE_URL, 
+                      destfile = fname)
+    }
+    readr::read_tsv(fname, 
+                    lazy=FALSE, 
+                    show_col_types=FALSE, 
+                    n_max=1000000, # Increase for more accurate results
+                                   # We're currently using a subset for speed
+                    na="\\N") |>
+        mutate(across(ends_with("year"), as.numeric))
+}
+
+tiny_table <- function(x){
+    xx <- as_label(enquo(x))
+    x |> slice_sample(n=10) |> gt(id=paste0("tbl_", tolower(xx))) |> tab_header(xx)
+}
+```
+
+```{r}
+#| echo: false
+#| cache: true
+NAME_BASICS      <- get_imdb_file("name.basics")
+tiny_table(NAME_BASICS)
+```
+
+## Tables
+
+```{r}
+#| echo: false
+#| cache: true
+TITLE_BASICS      <- get_imdb_file("title.basics")
+tiny_table(TITLE_BASICS)
+```
+
+
+## Tables
+
+```{r}
+#| echo: false
+#| cache: true
+TITLE_RATINGS      <- get_imdb_file("title.ratings")
+tiny_table(TITLE_RATINGS)
+```
+
+## Tables
+
+```{r}
+#| echo: false
+#| cache: true
+TITLE_CREW      <- get_imdb_file("title.crew")
+tiny_table(TITLE_CREW)
+```
+
+## Tables
+
+```{r}
+#| echo: false
+#| cache: true
+TITLE_PRINCIPALS    <- get_imdb_file("title.principals")
+tiny_table(TITLE_PRINCIPALS)
+```

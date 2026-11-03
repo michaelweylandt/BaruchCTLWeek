@@ -1,0 +1,39 @@
+project:
+  type: website
+  output-dir: docs
+  execute-dir: project
+
+website:
+  title: "Baruch CTL Week 2026"
+  description: "Teaching Demo Adapted from STA 9750"
+  site-url: "https://michael-weylandt.com/BaruchCTL/"
+  repo-url: https://github.com/michaelweylandt/BaruchCTL
+  repo-actions: [edit, source, issue]
+  navbar: true
+
+format:
+  html:
+    theme:
+      - sandstone
+      - a11y.scss
+    margin-left: 0em
+    toc: true
+    code-copy: true
+    code-link: true
+    toc_depth: 5
+    toc-location: "left"
+    page-layout: "full"
+  live-html:
+    theme:
+      - sandstone
+      - a11y.scss
+    margin-left: 0em
+    toc: true
+    code-copy: true
+    code-link: true
+    toc_depth: 5
+    toc-location: "left"
+
+
+
+
