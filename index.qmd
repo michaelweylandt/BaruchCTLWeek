@@ -25,7 +25,7 @@ library(httr2)
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: false
+#| echo: true
 suppressPackageStartupMessages({
   suppressMessages({
     library(tidyverse)
@@ -41,35 +41,35 @@ if(fs::dir_exists("docs/data/processed")){
 ```
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 #| message: false
 NAME_BASICS <- read_csv("name_basics.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 #| message: false
 NAME_BASICS_LONGER <- read_csv("name_basics_longer.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 #| message: false
 TITLE_BASICS <- read_csv("title_basics.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 #| message: false
 TITLE_BASICS_LONGER <- read_csv("title_basics_longer.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 #| message: false
 TITLE_RATINGS <- read_csv("title_ratings.csv.gz",
                           show_col_types=FALSE)
@@ -78,7 +78,7 @@ TITLE_CREW <- read_csv("title_crew.csv.gz",
 ```
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 #| message: false
 TITLE_PRINCIPALS <- read_csv("title_principals.csv.gz",
                              show_col_types=FALSE)
@@ -132,7 +132,7 @@ Participants will be able to take part in this lesson in two ways:
     the assignment on this page, using interactive code blocks like this: 
    
     ```{webr}
-    #| autorun: true
+    #| autorun: false
     1 + 2 + 3
     ```
 
@@ -156,7 +156,7 @@ functionality.
     
     
 ```{webr}
-#| autorun: true
+#| autorun: false
 #| echo: false
 message("Initialization complete. Exercises ready-to-run!")
 ```
@@ -734,7 +734,7 @@ some basic sketches on a scratch piece of paper are often quite clarifying.
     names, so we are fine dropping unmatched values.
     
     ```{webr}
-    #| autorun: true
+    #| autorun: false
     NAME_BASICS_LONGER |> 
         filter(primaryName == "Harrison Ford", 
                birthYear == 1942 # Make sure to ignore the silent-film era Ford
@@ -753,7 +753,7 @@ some basic sketches on a scratch piece of paper are often quite clarifying.
     so an `inner_join()` will suffice. 
 
     ```{webr}
-    #| autorun: true
+    #| autorun: false
     TITLE_CREW |> 
         count(directors) |> 
         slice_max(n) |> 
@@ -842,7 +842,7 @@ where I actually have sufficient info to compute my success metric.
 This join is easy to implement: 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_SUCCESS <- TITLE_BASICS |> 
     select(tconst, primaryTitle, startYear) |> 
     inner_join(TITLE_RATINGS, join_by(tconst == tconst)) |> 
@@ -852,7 +852,7 @@ TITLE_SUCCESS <- TITLE_BASICS |>
 From here, we can look at the top-scoring films: 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_SUCCESS |> slice_max(success, n=10)
 ```
 
@@ -860,7 +860,7 @@ I would be proud (of how much money I would make) if I were to produce any of
 those films. On the tail end of the spectrum, we see some definite failures: 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_SUCCESS |> slice_min(success, n=5)
 ```
 
@@ -868,7 +868,7 @@ A more robust verification would be to find a movie with a high number of
 ratings (for some reason) but still a (relatively) low success score. 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_SUCCESS |> filter(numVotes > 100000) |> slice_min(success)
 ```
 
@@ -880,7 +880,7 @@ century](https://www.nytimes.com/interactive/2020/movies/greatest-actors-actress
 by the New York *Times*. We can pull out his top films: 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_SUCCESS |> 
   inner_join(TITLE_PRINCIPALS, join_by(tconst==tconst)) |> 
   inner_join(NAME_BASICS, join_by(nconst==nconst)) |> 
@@ -892,7 +892,7 @@ TITLE_SUCCESS |>
 Absolute hits all. And on the other end of the spectrum: 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_SUCCESS |> 
   inner_join(TITLE_PRINCIPALS, join_by(tconst==tconst)) |> 
   inner_join(NAME_BASICS, join_by(nconst==nconst)) |> 
@@ -948,7 +948,7 @@ Inspired by the questions above, I can compute the success rates of different
 genres over the past 25 years: 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_BASICS_LONGER |> 
   select(tconst, genre) |>
   inner_join(TITLE_SUCCESS, 
@@ -1009,7 +1009,7 @@ potential remakes) and recorded the highest success score ever for that film
 and the highest (latest) year in which it was (re-)made: 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 TITLE_BASICS |> 
     select(tconst, genres) |>
     inner_join(TITLE_SUCCESS, 
@@ -1074,7 +1074,7 @@ throughout, ensuring that we get only those films for which we have
 all four pieces of information before we go hunting for our top directors. 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 SCIFI_HISTORY_DIRECTORS <- TITLE_BASICS |> 
     select(tconst, genres) |>
     inner_join(TITLE_SUCCESS, 
@@ -1100,7 +1100,7 @@ That one is quite a lot to chew on, so let's do a bit of work to polish up
 the presentation of our top sci-fi directors. 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 SCIFI_HISTORY_DIRECTORS |> 
     filter(average_success_scifi_TRUE > 700000, 
            latest_scifi_TRUE < 2020) |>
@@ -1154,7 +1154,7 @@ and a Marty McFly. For Doc Brown, we want a well-known and well-loved actor
 with a limited sci-fi resume. 
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 NO_SCIFI_HISTORY_ACTORS <- TITLE_BASICS |> 
     select(tconst, genres) |>
     inner_join(TITLE_SUCCESS, 
@@ -1191,7 +1191,7 @@ For Marty McFly, we want a new face on the scene, with only a few credits, but
 a strong track record.
 
 ```{webr}
-#| autorun: true
+#| autorun: false
 NO_SCIFI_HISTORY_ACTORS |> 
     slice_max(first) |>
     gt(id="tbl_top_actors_marty") |>
