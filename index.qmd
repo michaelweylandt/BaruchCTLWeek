@@ -8,6 +8,11 @@ resources:
 
 {{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
 
+```{webr}
+1 + 2 + 3
+```
+
+
 ```{r}
 #| include: false
 #| warning: false
@@ -27,55 +32,55 @@ suppressPackageStartupMessages({
     library(gt)
   })
 })
+
+if(fs::dir_exists("docs/data/processed")){
+  setwd("docs/data/processed")
+} else {
+  setwd("data/processed")
+}
 ```
 
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: false
-NAME_BASICS <- read_csv("data/processed/name_basics.csv.gz", 
+NAME_BASICS <- read_csv("name_basics.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: false
-NAME_BASICS_LONGER <- read_csv("data/processed/name_basics_longer.csv.gz", 
+NAME_BASICS_LONGER <- read_csv("name_basics_longer.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: false
-TITLE_BASICS <- read_csv("data/processed/title_basics.csv.gz", 
+TITLE_BASICS <- read_csv("title_basics.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: false
-TITLE_BASICS_LONGER <- read_csv("data/processed/title_basics_longer.csv.gz", 
+TITLE_BASICS_LONGER <- read_csv("title_basics_longer.csv.gz", 
                         show_col_types=FALSE)
 ```
 
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: false
-TITLE_RATINGS <- read_csv("data/processed/title_ratings.csv.gz",
+TITLE_RATINGS <- read_csv("title_ratings.csv.gz",
                           show_col_types=FALSE)
-TITLE_CREW <- read_csv("data/processed/title_crew.csv.gz", 
+TITLE_CREW <- read_csv("title_crew.csv.gz", 
                        show_col_types=FALSE)
 ```
 
 ```{webr}
 #| autorun: true
 #| message: false
-#| echo: false
-TITLE_PRINCIPALS <- read_csv("data/processed/title_principals.csv.gz",
+TITLE_PRINCIPALS <- read_csv("title_principals.csv.gz",
                              show_col_types=FALSE)
 ```
 
