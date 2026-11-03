@@ -17,6 +17,7 @@ format:
 
 ---
 
+
 # Review 
 
 ## Single-Table Verbs
@@ -320,7 +321,7 @@ The `right_join` is the exact opposite:
 
 If you think this all sounds like Venn diagrams and set theory, you aren't wrong:
 
-![](https://michael-weylandt.com/STA9750/images/dplyr_joins.svg){#center}
+![](https://michael-weylandt.com/STA9750/images/dplyr_joins.svg){fig-align="center"}
 
 ## So Which One?
 
@@ -469,3 +470,124 @@ tiny_table(TITLE_CREW)
 TITLE_PRINCIPALS    <- get_imdb_file("title.principals")
 tiny_table(TITLE_PRINCIPALS)
 ```
+
+## Warm-Up
+
+Warm Up: What movies is Harrison Ford known for?
+
+. . . 
+
+- Table 1: `NAME_BASICS` - Find Harrison Ford and pull `knownForTitles`
+- Table 2: `TITLE_BASICS` - Map `tconst` values to movie names
+- Join: `knownForTitles` to `tconst`
+
+. . . 
+
+_Inner_ join because we will ultimately ignore 'unknown' movies
+
+## Warm-Up
+
+
+Pull out "Harrison Ford":
+
+```{r}
+#| echo: true
+#| eval: false
+NAME_BASICS  |>
+    filter(primaryName == "Harrison Ford")
+```
+
+```{r}
+#| echo: false
+NAME_BASICS  |>
+    filter(primaryName == "Harrison Ford") |>
+    gt() |>
+    cols_label(primaryName="Name",
+               birthYear="Birth Year",
+               deathYear="Death Year",
+               knownForTitles="Known For") |>
+    cols_hide(primaryProfession) |>
+    tab_header("Best of Harrison Ford")
+```
+
+
+
+## Warm-Up
+
+Not this guy: 
+
+![](https://upload.wikimedia.org/wikipedia/commons/6/6f/Harrison_Ford_-_Jun_1925_EH.jpg){width="35%" fig-align="center"}
+
+## Warm-Up
+
+```{r}
+#| echo: true
+#| eval: false
+NAME_BASICS  |>
+    filter(primaryName == "Harrison Ford", 
+           birthYear>1900)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+NAME_BASICS  |>
+    filter(primaryName == "Harrison Ford", 
+           birthYear>1900) |>
+    gt() |>
+    cols_label(primaryName="Name",
+               birthYear="Birth Year",
+               deathYear="Death Year",
+               knownForTitles="Known For") |>
+    cols_hide(primaryProfession) |>
+    tab_header("Best of Harrison Ford")
+```
+
+## Warm-Up
+
+`inner_join` to find matching rows: 
+
+```{r}
+#| echo: true
+#| eval: false
+NAME_BASICS  |>
+    filter(primaryName == "Harrison Ford", 
+           birthYear>1900) |>
+    inner_join(TITLE_BASICS,
+               join_by(knownForTitles == tconst))
+```
+
+
+```{r}
+#| echo: false
+NAME_BASICS  |>
+    filter(primaryName == "Harrison Ford", 
+           birthYear>1900) |>
+    separate_longer_delim(knownForTitles, ",") |>
+    inner_join(TITLE_BASICS,
+               join_by(knownForTitles == tconst)) |>
+    select(nconst, primaryName, knownForTitles, primaryTitle, startYear, genres) |>
+    gt() |>
+    cols_label(primaryName="Name",
+               knownForTitles="tconst",
+               primaryTitle="Title",
+               startYear="Release Year",
+               genres="Genre",) |>
+    tab_header("Best of Harrison Ford")
+```
+
+## Warm-Up
+
+![](./harrison_imdb.png){fig-align="center" width="60%"}
+
+## Analysis
+
+Analytic Pipeline: 
+
+1) What does it mean for a movie to be successful? 
+2) What genre has a high success rate? 
+3) What are the most successful movies in that genre?
+4) What directors are successful in that genre?
+5) What actors have never worked in that genre?
+6) Pitch Time!
+
